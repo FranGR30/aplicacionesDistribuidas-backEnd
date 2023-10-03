@@ -21,6 +21,15 @@ app.use(express.json())
 app.use(express.urlencoded({extended: true}))
 
 // Cargar conf rutas
+const userRoutes = require("./router/user")
+const estateRoutes = require("./router/estate")
+const contactRoutes = require("./router/contact")
+const calificationRoutes = require("./router/calification")
+
+app.use("/mi-home/users", userRoutes)
+app.use("/mi-home/estates", estateRoutes)
+app.use("/mi-home/contacts", contactRoutes)
+app.use("/mi-home/califications", calificationRoutes)
 
 // Prueba
 app.get("/ruta-prueba", (req, res) => {

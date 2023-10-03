@@ -4,13 +4,13 @@
   "description": "api para la aplicacion myHome",
   "main": "index.js",
   "scripts": {
-    "start":"nodemon index.js"
+    "start": "nodemon index.js"
   },
   "repository": "https://github.com/FranGR30/aplicacionesDistribuidas-backEnd.git",
   "author": "Fran Garcia <fgr304@gmail.com>",
   "license": "MIT",
   "dependencies": {
-    "bcrypt-nodejs": "^0.0.3",
+    "bcrypt": "^5.1.1",
     "cors": "^2.8.5",
     "express": "^4.18.2",
     "jwt-simple": "^0.5.6",
