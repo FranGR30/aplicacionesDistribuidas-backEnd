@@ -39,6 +39,10 @@ const UserSchema = Schema({
     password: {
         type: String,
         required: true
+    },
+    nickName: {
+        type: String,
+        required: true
     }
 })
 
