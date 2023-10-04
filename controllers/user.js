@@ -41,6 +41,7 @@ const register = (req, res) => {
         let pwd = await bcrypt.hash(params.password, 10)
         params.password = pwd
         let newUser = new User(params)
+        newUser.role = "realEstate"
         newUser.password = pwd
         newUser.save((error, userStored) => {
             if (error || !userStored) {
@@ -146,8 +147,6 @@ const getMe = (req, res) => {
 const update = (req, res) => {
     const userToUpdate = req.body
     const userIdentity = req.user
-    console.log(userIdentity);
-    console.log(userToUpdate);
     delete userToUpdate.iat
     delete userToUpdate.exp
     delete userToUpdate.role
@@ -162,7 +161,7 @@ const update = (req, res) => {
             if (error) {
                 return res.status(500).json({
                     status: "error",
-                    message: "Error registering user",
+                    message: "Error updating user",
                 })
             }
             let userIsSet = false;
