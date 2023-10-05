@@ -10,7 +10,7 @@ const pruebaUser = (req, res) => {
     })
 }
 
-// Registro de usuarios
+// Registro de inmobiliarias
 const register = (req, res) => {
     let params = req.body
     if (!params.name || !params.email || !params.password || !params.surname || !params.telephone || !params.nickName) {

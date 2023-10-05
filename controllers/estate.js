@@ -1,4 +1,5 @@
 const Estate = require("../models/estate")
+const User = require("../models/user")
 // Prueba
 const pruebaEstate = (req, res) => {
     return res.status(200).send({
@@ -6,10 +7,9 @@ const pruebaEstate = (req, res) => {
     })
 }
 
-const newEstate = (req, res) => {
+const newEstate = async (req, res) => {
     let params = req.body
     const id = req.user.id
-    const userToAddEstate = req.user
     if (!params.street || !params.addressNumber || !params.floor || !params.neighborhood || !params.state || !params.country
         || !params.estateType || !params.coveredSquareMeters || !params.semiUncoveredSquaremeters
         || !params.uncoveredSquareMeters || !params.roomsAmount || !params.bathroomsAmount
@@ -21,32 +21,40 @@ const newEstate = (req, res) => {
             message: "Required fields missing",
         })
     }
-    console.log(userToAddEstate);
-    console.log(new Estate(params))
-    userToAddEstate.estates.push(new Estate(params))
-    console.log(id);
-    try {
-        let userUpdated = User.findByIdAndUpdate(id, userToAddEstate, { new: true })
-        console.log(userUpdated);
-        if (!userUpdated) {
-            return res.status(400).send({
-                status: "error",
-                message: "Error updating user",
-            })
-        }
-        return res.status(200).json({
-            status: "success",
-            message: "Estate created successfully",
-            estate: userToAddEstate.estates[userToAddEstate.estates.legth - 1]
+    await User.findById(id)
+        .exec(async (error, user) => {
+            console.log(user);
+            if (error || !user) {
+                return res.status(404).send({
+                    status: "error",
+                    message: "User not found or an error has occured",
+                })
+            }
+            let newEstate = new Estate(params)
+            user.estates.push(newEstate)
+            console.log(user);
+            try {
+                let userUpdated = await User.findByIdAndUpdate(id, user, { new: true })
+                if (!userUpdated) {
+                    return res.status(400).send({
+                        status: "error",
+                        message: "Error updating user",
+                    })
+                }
+                return res.status(200).json({
+                    status: "success",
+                    message: "Estate created successfully",
+                    estate: newEstate
+                })
+            } catch (error) {
+                if (error) {
+                    return res.status(500).send({
+                        status: "error",
+                        message: "Error updating user",
+                    })
+                }
+            }
         })
-    } catch (error) {
-        if (error) {
-            return res.status(500).send({
-                status: "error",
-                message: "Error updating user",
-            })
-        }
-    }
 }
 
 // Exportar acciones

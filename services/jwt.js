@@ -14,7 +14,9 @@ const createToken = (user) => {
         telephone: user.telephone,
         iat: moment().unix(),
         exp: moment().add(30,"days").unix(),
-        estates: user.estates
+        estates: user.estates,
+        califications: user.califications,
+        favorites: user.favorites
     }
     return jwt.encode(payload, secret)
 }
