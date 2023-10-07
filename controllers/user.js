@@ -4,6 +4,8 @@ const jwt = require("../services/jwt")
 const Estate = require("../models/estate")
 const fs = require("fs")
 const path = require("path")
+const DEFAULT_IMG = "default.png"
+const PATH_AVATARS = "./uploads/avatars/"
 
 // Prueba
 const pruebaUser = (req, res) => {
@@ -60,7 +62,7 @@ const register = (req, res) => {
         if (req.file) {
             newUser.avatar = req.file.filename
         } else {
-            newUser.avatar = "default.png"
+            newUser.avatar = DEFAULT_IMG
         }
         newUser.save((error, userStored) => {
             if (error || !userStored) {
@@ -207,12 +209,16 @@ const update = (req, res) => {
                         message: "Image/s extension invalid",
                     })
                 }
-                if (req.file.filename != "default.png") {
-                    let filePath = "./uploads/avatars/" + req.user.avatar
-                    console.log(filePath);
+                if (req.file.filename != DEFAULT_IMG) {
+                    let filePath = PATH_AVATARS + req.user.avatar
                     let fileDeleted = fs.unlinkSync(filePath)
                 }
+                console.log(req.file);
                 userToUpdate.avatar = req.file.filename
+            } else {
+                let filePath = PATH_AVATARS + req.user.avatar
+                let fileDeleted = fs.unlinkSync(filePath)
+                userToUpdate.avatar = DEFAULT_IMG
             }
             if (userToUpdate.password) {
                 let pwd = await bcrypt.hash(userToUpdate.password, 10)
@@ -274,7 +280,7 @@ const deleteUser = (req, res) => {
             })
         }
         try {
-            if (req.user.avatar != "default.png") {
+            if (req.user.avatar != DEFAULT_IMG) {
                 let filePath = "./uploads/avatars/" + req.user.avatar
                 let fileDeleted = fs.unlinkSync(filePath)
             }
@@ -301,6 +307,21 @@ const deleteUser = (req, res) => {
     })
 }
 
+const getAvatar = (req, res) => {
+    const file = req.params.file
+    const filePath = PATH_AVATARS + file
+    console.log(filePath);
+    fs.stat(filePath, (error, exists) => {
+        if (!exists) {
+            return res.status(404).send({
+                status: "error",
+                message: "Image not found",
+            })
+        }
+        return res.sendFile(path.resolve(filePath))
+    })
+}
+
 // Exportar acciones
 module.exports = {
     pruebaUser,
@@ -309,5 +330,6 @@ module.exports = {
     getUser,
     getMe,
     update,
-    deleteUser
+    deleteUser,
+    getAvatar
 }

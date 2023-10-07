@@ -23,6 +23,7 @@ router.get("/me", check.auth, userController.getMe)
 router.get("/:id", check.auth, userController.getUser)
 router.put("/me", [check.auth, uploads.single("avatar")], userController.update)
 router.delete("/me", check.auth, userController.deleteUser)
+router.get("/media/:file", check.auth, userController.getAvatar)
 
 // Exportar router
 module.exports = router
