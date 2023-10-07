@@ -106,6 +106,18 @@ const EstateSchema = Schema({
     longitude: {
         type: String,
         required: true,
+    },
+    videoUrl: {
+        type: String,
+        required: false,
+    },
+    images: [{
+        type: String,
+        required: false
+    }],
+    realEstate: {
+        type: Schema.ObjectId,
+        ref: "user"
     }
 })
 

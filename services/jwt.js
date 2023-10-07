@@ -16,7 +16,8 @@ const createToken = (user) => {
         exp: moment().add(30,"days").unix(),
         estates: user.estates,
         califications: user.califications,
-        favorites: user.favorites
+        favorites: user.favorites,
+        avatar: user.avatar
     }
     return jwt.encode(payload, secret)
 }

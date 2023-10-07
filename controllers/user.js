@@ -1,6 +1,9 @@
 const User = require("../models/user")
 const bcrypt = require("bcrypt")
 const jwt = require("../services/jwt")
+const Estate = require("../models/estate")
+const fs = require("fs")
+const path = require("path")
 
 // Prueba
 const pruebaUser = (req, res) => {
@@ -17,6 +20,17 @@ const register = (req, res) => {
         return res.status(400).json({
             status: "error",
             message: "Required fields missing",
+        })
+    }
+    let image = req.file.originalname
+    let imageSplit = image.split("\.")
+    let extension = imageSplit[1]
+    if (extension != "png" && extension != "jpg" && extension != "jpeg") {
+        let filePath = req.file.path
+        let fileDeleted = fs.unlinkSync(filePath)
+        return res.status(400).send({
+            status: "error",
+            message: "Image/s extension invalid",
         })
     }
     User.find({
@@ -43,6 +57,11 @@ const register = (req, res) => {
         let newUser = new User(params)
         newUser.role = "realEstate"
         newUser.password = pwd
+        if (req.file) {
+            newUser.avatar = req.file.filename
+        } else {
+            newUser.avatar = "default.png"
+        }
         newUser.save((error, userStored) => {
             if (error || !userStored) {
                 return res.status(500).send({
@@ -176,6 +195,25 @@ const update = (req, res) => {
                     message: "User already registered",
                 })
             }
+            if (req.file) {
+                let image = req.file.originalname
+                let imageSplit = image.split("\.")
+                let extension = imageSplit[1]
+                if (extension != "png" && extension != "jpg" && extension != "jpeg") {
+                    let filePath = req.file.path
+                    let fileDeleted = fs.unlinkSync(filePath)
+                    return res.status(400).send({
+                        status: "error",
+                        message: "Image/s extension invalid",
+                    })
+                }
+                if (req.file.filename != "default.png") {
+                    let filePath = "./uploads/avatars/" + req.user.avatar
+                    console.log(filePath);
+                    let fileDeleted = fs.unlinkSync(filePath)
+                }
+                userToUpdate.avatar = req.file.filename
+            }
             if (userToUpdate.password) {
                 let pwd = await bcrypt.hash(userToUpdate.password, 10)
                 userToUpdate.password = pwd
@@ -203,6 +241,66 @@ const update = (req, res) => {
             }
         })
 }
+
+const deleteUser = (req, res) => {
+    const idUser = req.user.id
+    Estate.find({ realEstate: idUser }).exec(async (error, estates) => {
+        if (error) {
+            return res.status(500).send({
+                status: "error",
+                message: "Error deleting user",
+            })
+        }
+        try {
+            for (let i = 0; i < estates.length; i++) {
+                for (let j = 0; j < estates[i].images.length; j++) {
+                    let filePath = "./uploads/estateImages/" + estates[i].images[j]
+                    let fileDeleted = fs.unlinkSync(filePath)
+                }
+            }
+        } catch (error) {
+            return res.status(500).send({
+                status: "error",
+                message: "Error deleting user",
+            })
+        }
+
+    })
+    Estate.deleteMany({ "realEstate": idUser }).exec(error => {
+        if (error) {
+            return res.status(400).send({
+                status: "error",
+                message: "Error deleting user",
+            })
+        }
+        try {
+            if (req.user.avatar != "default.png") {
+                let filePath = "./uploads/avatars/" + req.user.avatar
+                let fileDeleted = fs.unlinkSync(filePath)
+            }
+        } catch (error) {
+            return res.status(500).send({
+                status: "error",
+                message: "Error deleting user",
+                error: error
+            })
+        }
+        User.findByIdAndDelete(idUser).exec((error, userDeleted) => {
+            if (error || !userDeleted) {
+                return res.status(400).send({
+                    status: "error",
+                    message: "Error deleting user",
+                })
+            }
+            return res.status(200).json({
+                status: "success",
+                message: "User deleted",
+                userId: idUser
+            })
+        })
+    })
+}
+
 // Exportar acciones
 module.exports = {
     pruebaUser,
@@ -210,5 +308,6 @@ module.exports = {
     login,
     getUser,
     getMe,
-    update
+    update,
+    deleteUser
 }
