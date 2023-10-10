@@ -2,6 +2,7 @@ const User = require("../models/user")
 const bcrypt = require("bcrypt")
 const jwt = require("../services/jwt")
 const Estate = require("../models/estate")
+const Favorite = require("../models/favorite")
 const fs = require("fs")
 const path = require("path")
 const DEFAULT_IMG = "default.png"
@@ -203,7 +204,7 @@ const update = (req, res) => {
                 let extension = imageSplit[1]
                 if (extension != "png" && extension != "jpg" && extension != "jpeg") {
                     let filePath = req.file.path
-                    let fileDeleted = fs.unlinkSync(filePath)
+                    fs.unlinkSync(filePath)
                     return res.status(400).send({
                         status: "error",
                         message: "Image/s extension invalid",
@@ -211,13 +212,13 @@ const update = (req, res) => {
                 }
                 if (req.file.filename != DEFAULT_IMG) {
                     let filePath = PATH_AVATARS + req.user.avatar
-                    let fileDeleted = fs.unlinkSync(filePath)
+                    fs.unlinkSync(filePath)
                 }
                 console.log(req.file);
                 userToUpdate.avatar = req.file.filename
             } else {
                 let filePath = PATH_AVATARS + req.user.avatar
-                let fileDeleted = fs.unlinkSync(filePath)
+                fs.unlinkSync(filePath)
                 userToUpdate.avatar = DEFAULT_IMG
             }
             if (userToUpdate.password) {
@@ -258,10 +259,11 @@ const deleteUser = (req, res) => {
             })
         }
         try {
-            for (let i = 0; i < estates.length; i++) {
-                for (let j = 0; j < estates[i].images.length; j++) {
-                    let filePath = "./uploads/estateImages/" + estates[i].images[j]
-                    let fileDeleted = fs.unlinkSync(filePath)
+            //Eliminando imagenes de las propiuedades del usuario
+            for (const element of estates) {
+                for (let j = 0; j < element.images.length; j++) {
+                    let filePath = "./uploads/estateImages/" + element.images[j]
+                    fs.unlinkSync(filePath)
                 }
             }
         } catch (error) {
@@ -272,6 +274,16 @@ const deleteUser = (req, res) => {
         }
 
     })
+    //Eliminando los favoritos del usuario
+    Favorite.deleteMany({user:idUser}).exec(error => {
+        if (error) {
+            return res.status(400).send({
+                status: "error",
+                message: "Error deleting user",
+            })
+        }
+    })
+    //Eliminando propiedades del usuario
     Estate.deleteMany({ "realEstate": idUser }).exec(error => {
         if (error) {
             return res.status(400).send({
@@ -282,7 +294,7 @@ const deleteUser = (req, res) => {
         try {
             if (req.user.avatar != DEFAULT_IMG) {
                 let filePath = "./uploads/avatars/" + req.user.avatar
-                let fileDeleted = fs.unlinkSync(filePath)
+                fs.unlinkSync(filePath)
             }
         } catch (error) {
             return res.status(500).send({

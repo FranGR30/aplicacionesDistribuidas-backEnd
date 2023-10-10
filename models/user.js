@@ -48,12 +48,13 @@ const UserSchema = Schema({
     califications: [{
 
     }],
-    favorites: [{
-        type: Schema.ObjectId,
-        ref: "estate"
-    }],
     avatar: {
         type: String
+    },
+    status: {
+        type: String,
+        default: "active",
+        enum: ["active", "inactive"]
     }
 })
 

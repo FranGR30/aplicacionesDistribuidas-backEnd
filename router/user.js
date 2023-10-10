@@ -1,6 +1,7 @@
 const express = require("express")
 const router = express.Router()
 const userController = require("../controllers/user")
+const favoriteController = require("../controllers/favorite")
 const check = require("../middleware/auth")
 const multer = require("multer")
 
@@ -24,6 +25,9 @@ router.get("/:id", check.auth, userController.getUser)
 router.put("/me", [check.auth, uploads.single("avatar")], userController.update)
 router.delete("/me", check.auth, userController.deleteUser)
 router.get("/media/:file", check.auth, userController.getAvatar)
+router.post("/favorites/:estateId", check.auth, favoriteController.addFavorite)
+router.delete("/favorites/:estateId", check.auth, favoriteController.unFavorite)
+router.get("/me/favorites", check.auth, favoriteController.viewFavorites)
 
 // Exportar router
 module.exports = router
