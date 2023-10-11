@@ -10,6 +10,12 @@ const pruebaEstate = (req, res) => {
 }
 
 const newEstate = async (req, res) => {
+    if(req.user.status == "inactive") {
+        return res.status(500).send({
+            status: "error",
+            mensaje:"Unable to perform action. Inactive user"
+        })
+    }
     let params = req.body
     if (!params.street || !params.addressNumber || !params.floor || !params.neighborhood || !params.state || !params.country
         || !params.estateType || !params.coveredSquareMeters || !params.semiUncoveredSquaremeters
@@ -61,6 +67,12 @@ const newEstate = async (req, res) => {
 }
 
 const getEstate = (req, res) => {
+    if(req.user.status == "inactive") {
+        return res.status(500).send({
+            status: "error",
+            mensaje:"Unable to perform action. Inactive user"
+        })
+    }
     const id = req.params.idEstate
     Estate.findById(id)
         .exec((error, estate) => {
@@ -81,6 +93,12 @@ const getEstate = (req, res) => {
 const getImage = (req, res) => {
     const file = req.params.file
     const filePath = "./uploads/estateImages/" + file
+    if(req.user.status == "inactive") {
+        return res.status(500).send({
+            status: "error",
+            mensaje:"Unable to perform action. Inactive user"
+        })
+    }
     fs.stat(filePath, (error, exists) => {
         if (!exists) {
             return res.status(404).send({
@@ -94,6 +112,12 @@ const getImage = (req, res) => {
 
 const deleteEstate = (req, res) => {
     const id = req.params.idEstate
+    if(req.user.status == "inactive") {
+        return res.status(500).send({
+            status: "error",
+            mensaje:"Unable to perform action. Inactive user"
+        })
+    }
     Estate.find({ "realEstate": req.user.id, "_id": id }).exec(async (error, estates) => {
         if (error || estates.length < 1) {
             return res.status(500).send({
@@ -123,6 +147,12 @@ const deleteEstate = (req, res) => {
 
 const getEstatesfromUser = (req, res) => {
     const idUser = req.params.idUser
+    if(req.user.status == "inactive") {
+        return res.status(500).send({
+            status: "error",
+            mensaje:"Unable to perform action. Inactive user"
+        })
+    }
     Estate.find({ "realEstate": idUser }).exec((error, estates, total) => {
         if (error || estates.length <= 0) {
             return res.status(500).send({
@@ -145,6 +175,12 @@ const updateEstate = (req, res) => {
     const userId = req.user.id
     const estateToUpdate = req.body
     const files = req.files
+    if(req.user.status == "inactive") {
+        return res.status(500).send({
+            status: "error",
+            mensaje:"Unable to perform action. Inactive user"
+        })
+    }
     Estate.findById(estateId).exec(async (error, estate) => {
         if (error || !estate) {
             for (let i = 0; i < files.length; i++) {

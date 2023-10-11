@@ -14,6 +14,12 @@ const addFavorite = (req,res) => {
             message: "Unable to perform action. Type of user should be user",
         })
     }
+    if(req.user.status == "inactive") {
+        return res.status(500).send({
+            status: "error",
+            mensaje:"Unable to perform action. Inactive user"
+        })
+    }
     Estate.findById(idEstate).exec((error, estate) => {
         if (error || !estate) {
             return res.status(500).send({
@@ -56,6 +62,12 @@ const addFavorite = (req,res) => {
 const unFavorite = (req,res) => {
     const userId = req.user.id
     const idEstate = req.params.estateId
+    if(req.user.status == "inactive") {
+        return res.status(500).send({
+            status: "error",
+            mensaje:"Unable to perform action. Inactive user"
+        })
+    }
     Favorite.find({
         $and: [
         {user: userId},
@@ -85,6 +97,12 @@ const unFavorite = (req,res) => {
 }
 
 const viewFavorites = (req,res) => {
+    if(req.user.status == "inactive") {
+        return res.status(500).send({
+            status: "error",
+            mensaje:"Unable to perform action. Inactive user"
+        })
+    }
     Favorite.find(
         {user: req.user.id}
     ).exec(async (error, favorites) => {

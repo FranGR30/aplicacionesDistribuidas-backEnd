@@ -1,6 +1,6 @@
-const {schema, model} = require("mongoose")
+const {Schema, model} = require("mongoose")
 
-const calificationSchema = schema({
+const calificationSchema = Schema({
     realEstate: {
         type: Schema.ObjectId,
         ref: "Estate"
