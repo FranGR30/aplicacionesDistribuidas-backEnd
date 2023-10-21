@@ -1,4 +1,4 @@
-const {Schema, model} = require("mongoose")
+const { Schema, model } = require("mongoose")
 
 const UserSchema = Schema({
     name: {
@@ -27,9 +27,10 @@ const UserSchema = Schema({
     },
     role: {
         type: String,
-        default: "role_user"
+        default: "user",
+        enum: ['user', 'realEstate']
     },
-    created_at:{
+    created_at: {
         type: Date,
         default: Date.now
     },
@@ -39,7 +40,24 @@ const UserSchema = Schema({
     password: {
         type: String,
         required: true
+    },
+    nickName: {
+        type: String,
+        required: true
+    },
+    avatar: {
+        type: String
+    },
+    status: {
+        type: String,
+        default: "inactive",
+        enum: ["active", "inactive"]
+    },
+    passwordRecovery: {
+        type: Boolean,
+        default: false
     }
+
 })
 
 module.exports = model("user", UserSchema)
