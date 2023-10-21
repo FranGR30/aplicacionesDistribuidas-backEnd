@@ -28,6 +28,9 @@ router.get("/media/:file", check.auth, userController.getAvatar)
 router.post("/favorites/:estateId", check.auth, favoriteController.addFavorite)
 router.delete("/favorites/:estateId", check.auth, favoriteController.unFavorite)
 router.get("/me/favorites", check.auth, favoriteController.viewFavorites)
+router.post("/confirmation-code", userController.sendConfirmationCodeForgotPassword)
+router.post("/confirmation-code/verification", userController.verifyCode)
+router.post("/reset-password", userController.passwordChange)
 
 // Exportar router
 module.exports = router

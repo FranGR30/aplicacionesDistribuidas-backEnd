@@ -7,6 +7,7 @@ const check = require("../middleware/auth")
 router.get("/prueba-contact", contactController.pruebaContact)
 router.post("/", check.auth, contactController.createContact)
 router.get("/me/:typeOfContact", check.auth, contactController.getContacts)
+router.delete("/:contactId", check.auth, contactController.deleteContact)
 
 // Exportar router
 module.exports = router

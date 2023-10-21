@@ -45,17 +45,19 @@ const UserSchema = Schema({
         type: String,
         required: true
     },
-    califications: [{
-
-    }],
     avatar: {
         type: String
     },
     status: {
         type: String,
-        default: "active",
+        default: "inactive",
         enum: ["active", "inactive"]
+    },
+    passwordRecovery: {
+        type: Boolean,
+        default: false
     }
+
 })
 
 module.exports = model("user", UserSchema)

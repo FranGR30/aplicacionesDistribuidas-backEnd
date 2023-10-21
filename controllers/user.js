@@ -7,6 +7,30 @@ const fs = require("fs")
 const path = require("path")
 const DEFAULT_IMG = "default.png"
 const PATH_AVATARS = "./uploads/avatars/"
+const nodemailer = require("nodemailer")
+const user = require("../models/user")
+const codeLength = 6
+
+const config = {
+    host : 'smtp.gmail.com',
+    port : 587,
+    auth: {
+        user : 'denveruniversity30@gmail.com',
+        pass : 'dbqi cxvt bewt qcjp',
+    }
+}
+
+const transport = nodemailer.createTransport(config);
+
+function generarCodigoAlfanumerico(length) {
+    const caracteres = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let codigo = '';
+    for (let i = 0; i < length; i++) {
+      const randomIndex = Math.floor(Math.random() * caracteres.length);
+      codigo += caracteres.charAt(randomIndex);
+    }
+    return codigo;
+}
 
 // Prueba
 const pruebaUser = (req, res) => {
@@ -25,16 +49,18 @@ const register = (req, res) => {
             message: "Required fields missing",
         })
     }
+    if (req.file) {
     let image = req.file.originalname
     let imageSplit = image.split("\.")
     let extension = imageSplit[1]
-    if (extension != "png" && extension != "jpg" && extension != "jpeg") {
-        let filePath = req.file.path
-        let fileDeleted = fs.unlinkSync(filePath)
-        return res.status(400).send({
-            status: "error",
-            message: "Image/s extension invalid",
-        })
+        if (extension != "png" && extension != "jpg" && extension != "jpeg") {
+            let filePath = req.file.path
+            let fileDeleted = fs.unlinkSync(filePath)
+            return res.status(400).send({
+                status: "error",
+                message: "Image/s extension invalid",
+            })
+        }
     }
     User.find({
         $or: [
@@ -65,7 +91,9 @@ const register = (req, res) => {
         } else {
             newUser.avatar = DEFAULT_IMG
         }
-        newUser.save((error, userStored) => {
+        const code = generarCodigoAlfanumerico(codeLength)
+        newUser.confirmationCode = code
+        newUser.save(async (error, userStored) => {
             if (error || !userStored) {
                 return res.status(500).send({
                     status: "error",
@@ -73,11 +101,24 @@ const register = (req, res) => {
                 })
             }
             if (userStored) {
-                return res.status(200).json({
-                    status: "success",
-                    message: "User registered correctly",
-                    user: userStored
-                })
+                try{
+                    const mensaje = {
+                        from: 'denveruniversity30@gmail.com',
+                        to: params.email,
+                        subject: "Confirmation code",
+                        text: "Codigo de confirmacion: " + code,
+                    };
+                    await transport.sendMail(mensaje);
+                    return res.status(200).json({
+                        status: "success",
+                        message: "Code sent",
+                    })
+                } catch(error){
+                    return res.status(500).send({
+                        status: "error",
+                        message: "Error at saving user",
+                    })
+                }
             }
         })
     })
@@ -334,6 +375,131 @@ const getAvatar = (req, res) => {
     })
 }
 
+const verifyCode = async (req, res) => {
+    const userEmail = req.body.email
+    const code = req.body.code.toUpperCase()
+    await User.find({
+        email: userEmail
+    }).exec( async (error, users) => {
+        if (error || users.length == 0) {
+            return res.status(404).send({
+                status: "error",
+                message: "User not found or an error has occured",
+            })
+        }
+        const userToVerify = users[0]
+        if (userToVerify.confirmationCode != code) {
+            return res.status(400).send({
+                status: "error",
+                message: "Information sent is incorrect",
+            })
+        }
+        if (userToVerify.status == "active") {
+            userToVerify.passwordRecovery = true
+        }
+        userToVerify.status = "active"
+        await User.findByIdAndUpdate(userToVerify._id, userToVerify, { new: true }).exec((error, userUpdated) => {
+            if (error || !userUpdated) {
+                return res.status(500).send({
+                    status: "error",
+                    message: "Error verifying code",
+                })
+            }
+            return res.status(200).json({
+                status: "success",
+                message: "Code verified correctly",
+                user: userUpdated
+            })
+        })
+    })
+}
+
+
+const sendConfirmationCodeForgotPassword = async (req,res) => {
+    await User.find({
+        email: req.body.email
+    }).exec( async (error, users) => {
+        if (error || users.length == 0) {
+            return res.status(404).send({
+                status: "error",
+                message: "Email not found or an error has occured",
+            })
+        }
+        try{
+            const email = req.body.email
+            const code = generarCodigoAlfanumerico(codeLength)
+            const mensaje = {
+                from: 'denveruniversity30@gmail.com',
+                to: email,
+                subject: "Confirmation code",
+                text: "Codigo de confirmacion: " + code,
+            };
+            await transport.sendMail(mensaje);
+            const user = users[0]
+            user.confirmationCode = code
+            await User.findByIdAndUpdate(user._id, user, { new: true }).exec((error, userUpdated) => {
+            if (error || !userUpdated) {
+                return res.status(500).send({
+                    status: "error",
+                    message: "Error verifying code",
+                })
+            }
+            return res.status(200).json({
+                status: "success",
+                message: "Code sent correctly",
+                user: userUpdated
+            })
+        })
+        } catch(error){
+            console.error('Error al enviar el correo electronico', error);
+            res.status(500).send('Error al enviar el correo electronico');
+        }
+    })
+}
+
+const passwordChange = async (req, res) => {
+    await User.find({
+        email: req.body.email
+    }).exec( async (error, users) => {
+        if (error || users.length == 0) {
+            return res.status(404).send({
+                status: "error",
+                message: "Email not found or an error has occured",
+            })
+        }
+        const user = users[0]
+        if (!user.passwordRecovery) {
+            return res.status(400).send({
+                status: "error",
+                message: "Error changing the password",
+            })
+        }
+        user.passwordRecovery = false
+        let pwd = await bcrypt.hash(req.body.password, 10)
+        user.password = pwd
+        await User.findByIdAndUpdate(user._id, user, { new: true }).exec(async (error, userUpdated) => {
+            if (error || !userUpdated) {
+                return res.status(500).send({
+                    status: "error",
+                    message: "Error changing password",
+                })
+            }
+            const mensaje = {
+                from: 'denveruniversity30@gmail.com',
+                to: req.body.email,
+                subject: "Modificacion de contraseña exitosa",
+                text: userUpdated.name + " tu contraseña ha sido modificada con exito ;)",
+            }
+            await transport.sendMail(mensaje);
+            return res.status(200).json({
+                status: "success",
+                message: "Password changed successfully",
+                user: userUpdated
+            })
+        })
+    })
+}
+
 // Exportar acciones
 module.exports = {
     pruebaUser,
@@ -343,5 +509,8 @@ module.exports = {
     getMe,
     update,
     deleteUser,
-    getAvatar
+    getAvatar,
+    sendConfirmationCodeForgotPassword,
+    verifyCode,
+    passwordChange
 }
