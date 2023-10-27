@@ -55,7 +55,7 @@ const register = (req, res) => {
     let extension = imageSplit[1]
         if (extension != "png" && extension != "jpg" && extension != "jpeg") {
             let filePath = req.file.path
-            let fileDeleted = fs.unlinkSync(filePath)
+            fs.unlinkSync(filePath)
             return res.status(400).send({
                 status: "error",
                 message: "Image/s extension invalid",
