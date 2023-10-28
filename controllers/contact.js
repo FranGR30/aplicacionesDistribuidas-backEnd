@@ -1,9 +1,8 @@
-const { EqualizerTwoTone } = require("@mui/icons-material")
 const Contact = require("../models/contact")
 // Prueba
 const pruebaContact = (req,res) => {
     return res.status(200).send({
-        menaje:"Mensaje enviado desde el controller: controllers/contact.js"
+        mensaje:"Mensaje enviado desde el controller: controllers/contact.js"
     })
 }
 
