@@ -4,7 +4,7 @@ const express = require("express")
 const cors = require("cors")
 
 // Mensaje bienvenida
-console.log("MiHome start");
+console.log("MyHome start");
 
 // Coneccion a la bbdd
 connectionDB();
@@ -26,10 +26,10 @@ const estateRoutes = require("./router/estate")
 const contactRoutes = require("./router/contact")
 const calificationRoutes = require("./router/calification")
 
-app.use("/mi-home/users", userRoutes)
-app.use("/mi-home/estates", estateRoutes)
-app.use("/mi-home/contacts", contactRoutes)
-app.use("/mi-home/califications", calificationRoutes)
+app.use("/my-home/users", userRoutes)
+app.use("/my-home/estates", estateRoutes)
+app.use("/my-home/contacts", contactRoutes)
+app.use("/my-home/califications", calificationRoutes)
 
 // Prueba
 app.get("/ruta-prueba", (req, res) => {
