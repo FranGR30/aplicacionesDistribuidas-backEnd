@@ -140,6 +140,12 @@ const login = (req, res) => {
                     message: "Error processing login",
                 })
             }
+            if (user.status == "inactive") {
+                return res.status(400).json({
+                    status: "error",
+                    message: "Error. User inactive",
+                })
+            }
             if (!bcrypt.compareSync(params.password, user.password)) {
                 return res.status(400).json({
                     status: "error",
