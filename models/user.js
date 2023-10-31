@@ -7,7 +7,7 @@ const UserSchema = Schema({
     },
     surname: {
         type: String,
-        required: true
+        required: false
     },
     telephone: {
         type: String,
