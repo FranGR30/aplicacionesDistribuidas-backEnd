@@ -43,7 +43,7 @@ const pruebaUser = (req, res) => {
 // Registro de inmobiliarias
 const register = (req, res) => {
     let params = req.body
-    if (!params.name || !params.email || !params.password || !params.surname || !params.telephone || !params.nickName) {
+    if (!params.name || !params.email || !params.password || !params.telephone) {
         return res.status(400).json({
             status: "error",
             message: "Required fields missing",
@@ -65,8 +65,13 @@ const register = (req, res) => {
     User.find({
         $or: [
             { email: params.email.toLowerCase() },
+            { email: params.email2.toLowerCase() },
+            { email2: params.email.toLowerCase() },
+            { email2: params.email2.toLowerCase() },
             { telephone: params.telephone },
-            { nickName: params.nickName }
+            { telephone: params.telephone2 },
+            { telephone2: params.telephone },
+            { telephone2: params.telephone2 },
         ]
     }).exec(async (error, users) => {
         if (error) {
@@ -159,8 +164,6 @@ const login = (req, res) => {
                 message: "Login successful",
                 user: {
                     _id: user._id,
-                    name: user.name,
-                    surname: user.surname,
                     email: user.email,
                     telephone: user.telephone
                 },
@@ -222,8 +225,13 @@ const update = (req, res) => {
     User.find({
         $or: [
             { email: userToUpdate.email.toLowerCase() },
+            { email: userToUpdate.email2.toLowerCase() },
+            { email2: userToUpdate.email.toLowerCase() },
+            { email2: userToUpdate.email2.toLowerCase() },
             { telephone: userToUpdate.telephone },
-            { nickName: userToUpdate.nickName }
+            { telephone: userToUpdate.telephone2 },
+            { telephone2: userToUpdate.telephone },
+            { telephone2: userToUpdate.telephone2 }      
         ]
     })
         .exec(async (error, users) => {
