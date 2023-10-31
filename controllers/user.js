@@ -10,6 +10,7 @@ const PATH_AVATARS = "./uploads/avatars/"
 const nodemailer = require("nodemailer")
 const user = require("../models/user")
 const codeLength = 6
+const path = require('path');
 
 const config = {
     host : 'smtp.gmail.com',
@@ -299,74 +300,48 @@ const update = (req, res) => {
         })
 }
 
-const deleteUser = (req, res) => {
+const deleteUser = async (req, res) => {
     const idUser = req.user.id
-    Estate.find({ realEstate: idUser }).exec(async (error, estates) => {
-        if (error) {
-            return res.status(500).send({
-                status: "error",
-                message: "Error deleting user",
-            })
-        }
-        try {
-            //Eliminando imagenes de las propiuedades del usuario
-            for (const element of estates) {
-                for (let j = 0; j < element.images.length; j++) {
-                    let filePath = "./uploads/estateImages/" + element.images[j]
-                    fs.unlinkSync(filePath)
+    try {
+        const estates = await Estate.find({ realEstate: idUser }).exec();
+        await Promise.all(estates.map(async (element) => {
+            for (let j = 0; j < element.images.length; j++) {
+                let filePath = "./uploads/estateImages/" + element.images[j];
+                try {
+                    await fs.promises.unlink(filePath);
+                } catch (error) {
+                    return res.status(500).send({
+                        status: "error",
+                        message: "Error deleting user",
+                    });
                 }
             }
-        } catch (error) {
-            return res.status(500).send({
-                status: "error",
-                message: "Error deleting user",
-            })
+        }));
+
+        await Favorite.deleteMany({ user: idUser }).exec();
+
+        await Estate.deleteMany({ "realEstate": idUser }).exec();
+        if (req.user.avatar != DEFAULT_IMG) {
+            let filePath = "./uploads/avatars/" + req.user.avatar;
+            await fs.promises.unlink(filePath);
         }
 
-    })
-    //Eliminando los favoritos del usuario
-    Favorite.deleteMany({user:idUser}).exec(error => {
-        if (error) {
+        const userDeleted = await User.findByIdAndDelete(idUser).exec();
+        if (error || !userDeleted) {
             return res.status(400).send({
-                status: "error",
                 message: "Error deleting user",
-            })
+            });
         }
-    })
-    //Eliminando propiedades del usuario
-    Estate.deleteMany({ "realEstate": idUser }).exec(error => {
-        if (error) {
-            return res.status(400).send({
-                status: "error",
-                message: "Error deleting user",
-            })
-        }
-        try {
-            if (req.user.avatar != DEFAULT_IMG) {
-                let filePath = "./uploads/avatars/" + req.user.avatar
-                fs.unlinkSync(filePath)
-            }
-        } catch (error) {
-            return res.status(500).send({
-                status: "error",
-                message: "Error deleting user",
-                error: error
-            })
-        }
-        User.findByIdAndDelete(idUser).exec((error, userDeleted) => {
-            if (error || !userDeleted) {
-                return res.status(400).send({
-                    status: "error",
-                    message: "Error deleting user",
-                })
-            }
-            return res.status(200).json({
-                status: "success",
-                message: "User deleted",
-                userId: idUser
-            })
-        })
-    })
+        return res.status(200).json({
+            message: "User deleted",
+            userId: idUser
+        });
+    } catch (error) {
+        return res.status(500).send({
+            status: "error",
+            message: "Error deleting user",
+        });
+    }
 }
 
 const getAvatar = (req, res) => {
