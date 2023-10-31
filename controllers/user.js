@@ -62,10 +62,15 @@ const register = (req, res) => {
             })
         }
     }
+    if (!params.email2) {
+        params.email2 = params.email
+    }
     User.find({
         $or: [
             { email: params.email.toLowerCase() },
+            { email: params.email2.toLowerCase() },
             { email2: params.email.toLowerCase() },
+            { email2: params.email2.toLowerCase() },
             { telephone: params.telephone },
         ]
     }).exec(async (error, users) => {
