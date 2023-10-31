@@ -65,13 +65,7 @@ const register = (req, res) => {
     User.find({
         $or: [
             { email: params.email.toLowerCase() },
-            { email: params.email2.toLowerCase() },
-            { email2: params.email.toLowerCase() },
-            { email2: params.email2.toLowerCase() },
             { telephone: params.telephone },
-            { telephone: params.telephone2 },
-            { telephone2: params.telephone },
-            { telephone2: params.telephone2 },
         ]
     }).exec(async (error, users) => {
         if (error) {
@@ -225,13 +219,7 @@ const update = (req, res) => {
     User.find({
         $or: [
             { email: userToUpdate.email.toLowerCase() },
-            { email: userToUpdate.email2.toLowerCase() },
-            { email2: userToUpdate.email.toLowerCase() },
-            { email2: userToUpdate.email2.toLowerCase() },
-            { telephone: userToUpdate.telephone },
-            { telephone: userToUpdate.telephone2 },
-            { telephone2: userToUpdate.telephone },
-            { telephone2: userToUpdate.telephone2 }      
+            { telephone: userToUpdate.telephone },  
         ]
     })
         .exec(async (error, users) => {
