@@ -222,15 +222,15 @@ const update = (req, res) => {
     delete userToUpdate.iat
     delete userToUpdate.exp
     delete userToUpdate.role
-    if (!params.email2) {
-        params.email2 = params.email
+    if (!userToUpdate.email2) {
+        userToUpdate.email2 = userToUpdate.email
     }
     User.find({
         $or: [
             { email: userToUpdate.email.toLowerCase() },
             { email: userToUpdate.email2.toLowerCase() },
-            { email2: params.email.toLowerCase() },
-            { email2: params.email2.toLowerCase() },
+            { email2: userToUpdate.email.toLowerCase() },
+            { email2: userToUpdate.email2.toLowerCase() },
             { telephone: userToUpdate.telephone },  
         ]
     })
