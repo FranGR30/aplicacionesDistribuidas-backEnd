@@ -12,11 +12,11 @@ const user = require("../models/user")
 const codeLength = 6
 
 const config = {
-    host : 'smtp.gmail.com',
-    port : 587,
+    host: 'smtp.gmail.com',
+    port: 587,
     auth: {
-        user : 'denveruniversity30@gmail.com',
-        pass : 'dbqi cxvt bewt qcjp',
+        user: 'denveruniversity30@gmail.com',
+        pass: 'dbqi cxvt bewt qcjp',
     }
 }
 
@@ -26,8 +26,8 @@ function generarCodigoAlfanumerico(length) {
     const caracteres = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     let codigo = '';
     for (let i = 0; i < length; i++) {
-      const randomIndex = Math.floor(Math.random() * caracteres.length);
-      codigo += caracteres.charAt(randomIndex);
+        const randomIndex = Math.floor(Math.random() * caracteres.length);
+        codigo += caracteres.charAt(randomIndex);
     }
     return codigo;
 }
@@ -50,9 +50,9 @@ const register = (req, res) => {
         })
     }
     if (req.file) {
-    let image = req.file.originalname
-    let imageSplit = image.split("\.")
-    let extension = imageSplit[1]
+        let image = req.file.originalname
+        let imageSplit = image.split("\.")
+        let extension = imageSplit[1]
         if (extension != "png" && extension != "jpg" && extension != "jpeg") {
             let filePath = req.file.path
             fs.unlinkSync(filePath)
@@ -106,7 +106,7 @@ const register = (req, res) => {
                 })
             }
             if (userStored) {
-                try{
+                try {
                     const mensaje = {
                         from: 'denveruniversity30@gmail.com',
                         to: params.email,
@@ -118,7 +118,7 @@ const register = (req, res) => {
                         status: "success",
                         message: "Code sent",
                     })
-                } catch(error){
+                } catch (error) {
                     return res.status(500).send({
                         status: "error",
                         message: "Error at saving user",
@@ -225,34 +225,52 @@ const update = (req, res) => {
     if (!userToUpdate.email2) {
         userToUpdate.email2 = userToUpdate.email
     }
+    if (!req.file) {
+        return res.status(400).json({
+            status: "error",
+            message: "Required fields missing",
+        })
+    }
     User.find({
         $or: [
             { email: userToUpdate.email.toLowerCase() },
             { email: userToUpdate.email2.toLowerCase() },
             { email2: userToUpdate.email.toLowerCase() },
             { email2: userToUpdate.email2.toLowerCase() },
-            { telephone: userToUpdate.telephone },  
+            { telephone: userToUpdate.telephone },
         ]
-    })
-        .exec(async (error, users) => {
-            if (error) {
-                return res.status(500).json({
-                    status: "error",
-                    message: "Error updating user",
-                })
+    }).exec(async (error, users) => {
+        if (error) {
+            let filePath = req.file.path
+            fs.unlinkSync(filePath)
+            return res.status(500).json({
+                status: "error",
+                message: "Error updating user",
+            })
+        }
+        let userIsSet = false;
+        users.forEach(user => {
+            if (user && user._id != userIdentity.id) {
+                userIsSet = true
             }
-            let userIsSet = false;
-            users.forEach(user => {
-                if (user && user._id != userIdentity.id) {
-                    userIsSet = true
-                }
-            });
-            if (userIsSet) {
-                return res.status(200).send({
-                    status: "success",
-                    message: "User already registered",
-                })
-            }
+        });
+        if (userIsSet) {
+            let filePath = req.file.path
+            fs.unlinkSync(filePath)
+            return res.status(400).send({
+                status: "error",
+                message: "User already registered",
+            })
+        }
+        if (users[0].email != userToUpdate.email.toLowerCase()) {
+            let filePath = req.file.path
+            fs.unlinkSync(filePath)
+            return res.status(400).json({
+                status: "error",
+                message: "Error updating user",
+            })
+        }
+        try {
             if (req.file) {
                 let image = req.file.originalname
                 let imageSplit = image.split("\.")
@@ -265,93 +283,121 @@ const update = (req, res) => {
                         message: "Image/s extension invalid",
                     })
                 }
-                if (req.file.filename != DEFAULT_IMG) {
-                    let filePath = PATH_AVATARS + req.user.avatar
+                if (users[0].avatar != DEFAULT_IMG) {
+                    let filePath = PATH_AVATARS + users[0].avatar
                     fs.unlinkSync(filePath)
                 }
-                console.log(req.file);
                 userToUpdate.avatar = req.file.filename
-            } else {
-                let filePath = PATH_AVATARS + req.user.avatar
-                fs.unlinkSync(filePath)
-                userToUpdate.avatar = DEFAULT_IMG
             }
             if (userToUpdate.password) {
                 let pwd = await bcrypt.hash(userToUpdate.password, 10)
                 userToUpdate.password = pwd
             }
-            try {
-                let userUpdated = await User.findByIdAndUpdate(userIdentity.id, userToUpdate, { new: true })
-                if (!userUpdated) {
-                    return res.status(400).send({
-                        status: "error",
-                        message: "Error updating user",
-                    })
-                }
-                return res.status(200).json({
-                    status: "success",
-                    message: "Data updated successfully",
-                    user: userUpdated
+            let userUpdated = await User.findByIdAndUpdate(userIdentity.id, userToUpdate, { new: true })
+            if (!userUpdated) {
+                let filePath = req.file.path
+                fs.unlinkSync(filePath)
+                return res.status(400).send({
+                    status: "error",
+                    message: "Error updating user",
                 })
-            } catch (error) {
-                if (error || !userUpdated) {
-                    return res.status(500).send({
-                        status: "error",
-                        message: "Error updating user",
-                    })
-                }
             }
-        })
+            return res.status(200).json({
+                status: "success",
+                message: "Data updated successfully",
+                user: userUpdated
+            })
+        } catch (error) {
+            if (error || !userUpdated) {
+                let filePath = req.file.path
+                fs.unlinkSync(filePath)
+                return res.status(500).send({
+                    status: "error",
+                    message: "Error updating user",
+                })
+            }
+        }
+    })
 }
 
 const deleteUser = async (req, res) => {
-    const idUser = req.user.id
+    const idUser = req.user.id;
     try {
-        const estates = await Estate.find({ realEstate: idUser }).exec();
-        await Promise.all(estates.map(async (element) => {
-            for (let j = 0; j < element.images.length; j++) {
-                let filePath = "./uploads/estateImages/" + element.images[j];
-                try {
-                    await fs.promises.unlink(filePath);
-                } catch (error) {
-                    return res.status(500).send({
-                        status: "error",
-                        message: "Error deleting user",
-                    });
+    await User.findById(idUser).exec((error, userToDelete) => {
+        if (error || !userToDelete) {
+            return res.status(400).send({
+                status: "error",
+                message: "Error deleting user. User not found",
+            })
+        }
+        Estate.find({ realEstate: idUser }).exec(async (error, estates) => {
+            if (error) {
+                return res.status(500).send({
+                    status: "error",
+                    message: "Error deleting user",
+                    error: error,
+                    algo: "algo"
+                })
+            }
+            //Eliminando imagenes de las propiedades del usuario
+            for (const element of estates) {
+                for (let j = 0; j < element.images.length; j++) {
+                    let filePath = "./uploads/estateImages/" + element.images[j]
+                    fs.unlinkSync(filePath)
                 }
             }
-        }));
-
-        await Favorite.deleteMany({ user: idUser }).exec();
-
-        await Estate.deleteMany({ "realEstate": idUser }).exec();
-        if (req.user.avatar != DEFAULT_IMG) {
-            let filePath = "./uploads/avatars/" + req.user.avatar;
-            await fs.promises.unlink(filePath);
+        })
+        //Eliminando propiedades del usuario
+        Estate.deleteMany({ "realEstate": idUser }).exec(error => {
+            if (error) {
+                return res.status(400).send({
+                    status: "error",
+                    message: "Error deleting user",
+                })
+            }
+        })
+        //Eliminando los favoritos del usuario
+        Favorite.deleteMany({ user: idUser }).exec(error => {
+            if (error) {
+                return res.status(400).send({
+                    status: "error",
+                    message: "Error deleting user",
+                })
+            }
+        })
+        //Eliminando el avatar del usuario en caso de que no sea default
+        console.log(userToDelete.avatar);
+        if (userToDelete.avatar != DEFAULT_IMG) {
+            let filePath = "./uploads/avatars/" + userToDelete.avatar
+            console.log(filePath);
+            fs.unlinkSync(filePath)
         }
-
-        const userDeleted = await User.findByIdAndDelete(idUser).exec();
-        if (error || !userDeleted) {
-            return res.status(400).send({
-                message: "Error deleting user",
-            });
-        }
-        return res.status(200).json({
-            message: "User deleted",
-            userId: idUser
-        });
+        User.findByIdAndDelete(idUser).exec((error, userDeleted) => {
+            if (error || !userDeleted) {
+                return res.status(400).send({
+                    status: "error",
+                    message: "Error deleting user",
+                })
+            }
+            return res.status(200).json({
+                status: "success",
+                message: "User deleted",
+                userId: idUser
+            })
+        })
+    })
     } catch (error) {
         return res.status(500).send({
             status: "error",
             message: "Error deleting user",
-        });
+            error: error
+        })
     }
 }
 
 const getAvatar = (req, res) => {
     const file = req.params.file
     const filePath = PATH_AVATARS + file
-    console.log(filePath);
     fs.stat(filePath, (error, exists) => {
         if (!exists) {
             return res.status(404).send({
@@ -368,7 +414,7 @@ const verifyCode = async (req, res) => {
     const code = req.body.code.toUpperCase()
     await User.find({
         email: userEmail
-    }).exec( async (error, users) => {
+    }).exec(async (error, users) => {
         if (error || users.length == 0) {
             return res.status(404).send({
                 status: "error",
@@ -403,17 +449,17 @@ const verifyCode = async (req, res) => {
 }
 
 
-const sendConfirmationCodeForgotPassword = async (req,res) => {
+const sendConfirmationCodeForgotPassword = async (req, res) => {
     await User.find({
         email: req.body.email
-    }).exec( async (error, users) => {
+    }).exec(async (error, users) => {
         if (error || users.length == 0) {
             return res.status(404).send({
                 status: "error",
                 message: "Email not found or an error has occured",
             })
         }
-        try{
+        try {
             const email = req.body.email
             const code = generarCodigoAlfanumerico(codeLength)
             const mensaje = {
@@ -426,19 +472,19 @@ const sendConfirmationCodeForgotPassword = async (req,res) => {
             const user = users[0]
             user.confirmationCode = code
             await User.findByIdAndUpdate(user._id, user, { new: true }).exec((error, userUpdated) => {
-            if (error || !userUpdated) {
-                return res.status(500).send({
-                    status: "error",
-                    message: "Error verifying code",
+                if (error || !userUpdated) {
+                    return res.status(500).send({
+                        status: "error",
+                        message: "Error verifying code",
+                    })
+                }
+                return res.status(200).json({
+                    status: "success",
+                    message: "Code sent correctly",
+                    user: userUpdated
                 })
-            }
-            return res.status(200).json({
-                status: "success",
-                message: "Code sent correctly",
-                user: userUpdated
             })
-        })
-        } catch(error){
+        } catch (error) {
             console.error('Error al enviar el correo electronico', error);
             res.status(500).send('Error al enviar el correo electronico');
         }
@@ -448,7 +494,7 @@ const sendConfirmationCodeForgotPassword = async (req,res) => {
 const passwordChange = async (req, res) => {
     await User.find({
         email: req.body.email
-    }).exec( async (error, users) => {
+    }).exec(async (error, users) => {
         if (error || users.length == 0) {
             return res.status(404).send({
                 status: "error",
