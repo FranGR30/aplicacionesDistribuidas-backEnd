@@ -229,7 +229,9 @@ const update = (req, res) => {
     User.find({
         $or: [
             { email: userToUpdate.email.toLowerCase() },
+            { email: userToUpdate.email2.toLowerCase() },
             { email2: params.email.toLowerCase() },
+            { email2: params.email2.toLowerCase() },
             { telephone: userToUpdate.telephone },  
         ]
     })
