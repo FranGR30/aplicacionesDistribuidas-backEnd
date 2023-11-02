@@ -10,7 +10,6 @@ const PATH_AVATARS = "./uploads/avatars/"
 const nodemailer = require("nodemailer")
 const user = require("../models/user")
 const codeLength = 6
-const path = require('path');
 
 const config = {
     host : 'smtp.gmail.com',
