@@ -7,7 +7,7 @@ const UserSchema = Schema({
     },
     surname: {
         type: String,
-        required: true
+        required: false
     },
     telephone: {
         type: String,
@@ -38,10 +38,6 @@ const UserSchema = Schema({
         type: String
     },
     password: {
-        type: String,
-        required: true
-    },
-    nickName: {
         type: String,
         required: true
     },
