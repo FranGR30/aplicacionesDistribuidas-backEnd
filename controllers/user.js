@@ -74,7 +74,6 @@ const pruebaUser = (req, res) => {
 const register = (req, res) => {
     let params = req.body
     if (!params.name || !params.email || !params.password || !params.telephone) {
-        console.log(params);
         console.error(error);
         return res.status(400).json({
             status: "error",
@@ -152,7 +151,6 @@ const register = (req, res) => {
 
 const login = (req, res) => {
     let params = req.body
-    console.log(params);
     if (!params.email || !params.password) {
         return res.status(400).json({
             status: "error",
@@ -195,10 +193,10 @@ const login = (req, res) => {
 }
 
 const getUser = (req, res) => {
-    if(req.user.status == "inactive") {
+    if (req.user.status == "inactive") {
         return res.status(500).send({
             status: "error",
-            mensaje:"Unable to perform action. Inactive user"
+            mensaje: "Unable to perform action. Inactive user"
         })
     }
     const id = req.params.id
@@ -223,10 +221,10 @@ const getUser = (req, res) => {
 }
 
 const getMe = (req, res) => {
-    if(req.user.status == "inactive") {
+    if (req.user.status == "inactive") {
         return res.status(500).send({
             status: "error",
-            mensaje:"Unable to perform action. Inactive user"
+            mensaje: "Unable to perform action. Inactive user"
         })
     }
     const id = req.user.id
@@ -259,10 +257,10 @@ const update = (req, res) => {
     if (!userToUpdate.email2) {
         userToUpdate.email2 = userToUpdate.email
     }
-    if(req.user.status == "inactive") {
+    if (req.user.status == "inactive") {
         return res.status(500).send({
             status: "error",
-            mensaje:"Unable to perform action. Inactive user"
+            mensaje: "Unable to perform action. Inactive user"
         })
     }
     User.find({
@@ -351,10 +349,10 @@ const update = (req, res) => {
 
 const deleteUser = async (req, res) => {
     const idUser = req.user.id;
-    if(req.user.status == "inactive") {
+    if (req.user.status == "inactive") {
         return res.status(500).send({
             status: "error",
-            mensaje:"Unable to perform action. Inactive user"
+            mensaje: "Unable to perform action. Inactive user"
         })
     }
     try {
@@ -375,10 +373,12 @@ const deleteUser = async (req, res) => {
                     })
                 }
                 //Eliminando imagenes de las propiedades del usuario
-                for (const element of estates) {
-                    for (let j = 0; j < element.images.length; j++) {
-                        let filePath = "./uploads/estateImages/" + element.images[j]
-                        fs.unlinkSync(filePath)
+                for (const estate of estates) {
+                    for (const image of estate.images) {
+                        const bucket = gcs.bucket('my-home-storage');
+                        const filePathSplit = image.split("/")
+                        const fileName = filePathSplit[filePathSplit.length - 1]
+                        await bucket.file(`estateImages/${fileName}`).delete();
                     }
                 }
             })

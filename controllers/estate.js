@@ -126,9 +126,11 @@ const deleteEstate = (req, res) => {
                 message: "Estate could not be deleted",
             })
         }
-        for (let i = 0; i < estates[0].images.length; i++) {
-            const filePath = "./uploads/estateImages/" + estates[0].images[i]
-            let fileDeleted = fs.unlinkSync(filePath)
+        for (const image of estates[0].images) {
+            const bucket = gcs.bucket('my-home-storage');
+            const filePathSplit = image.split("/")
+            const fileName = filePathSplit[filePathSplit.length - 1]
+            await bucket.file(`estateImages/${fileName}`).delete();
         }
         Estate.findByIdAndDelete(id).exec(async error => {
             if (error) {
@@ -227,7 +229,6 @@ const updateEstate = (req, res) => {
             }
             //Elimina las imagenes antiguas de google cloud
             try {
-                console.log(estate.images);
                 for (const image of estate.images) {
                     const bucket = gcs.bucket('my-home-storage');
                     const filePathSplit = image.split("/")
