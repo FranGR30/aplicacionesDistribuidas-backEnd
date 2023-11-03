@@ -11,6 +11,7 @@ const nodemailer = require("nodemailer")
 const user = require("../models/user")
 const codeLength = 6
 const { Storage } = require("@google-cloud/storage");
+const { error } = require("console")
 const bucketUrl = "https://storage.googleapis.com/my-home-storage/avatar/"
 
 const config = {
@@ -73,6 +74,8 @@ const pruebaUser = (req, res) => {
 const register = (req, res) => {
     let params = req.body
     if (!params.name || !params.email || !params.password || !params.telephone) {
+        console.log(params);
+        console.error(error);
         return res.status(400).json({
             status: "error",
             message: "Required fields missing",
@@ -149,6 +152,7 @@ const register = (req, res) => {
 
 const login = (req, res) => {
     let params = req.body
+    console.log(params);
     if (!params.email || !params.password) {
         return res.status(400).json({
             status: "error",

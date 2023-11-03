@@ -14,10 +14,9 @@ const uploadMulter = multer({
         cb(null, "avatarImg-" + Date.now() + "-" + file.originalname )
     }
 });
-
 // Definir rutas
 router.get("/prueba-usuario", check.auth, userController.pruebaUser)
-router.post("/register", userController.register)
+router.post("/register",uploadMulter.single("avatar"), userController.register)
 router.post("/login", userController.login)
 router.get("/me", check.auth, userController.getMe)
 router.get("/:id", check.auth, userController.getUser)
@@ -30,7 +29,6 @@ router.get("/me/favorites", check.auth, favoriteController.viewFavorites)
 router.post("/confirmation-code", userController.sendConfirmationCodeForgotPassword)
 router.post("/confirmation-code/verification", userController.verifyCode)
 router.post("/reset-password", userController.passwordChange)
-router.post("/upload-image", uploadMulter.single("imgfile"), userController.upload)
 
 // Exportar router
 module.exports = router
