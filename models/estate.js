@@ -6,6 +6,24 @@ const EstateSchema = Schema({
         type: String,
         required: true
     },
+    title: {
+        type: String,
+        required: true
+    },
+    description: {
+        type: String,
+        required: true
+    },
+    floor: {
+        type: String
+    },
+    expenseCurrency: {
+        type: String,
+        enum: ['dolar', 'peso']
+    },
+    expenses: {
+        type: String,
+    },
     addressNumber: {
         type: Number,
         required: true
@@ -85,10 +103,15 @@ const EstateSchema = Schema({
         type: String,
         required: true
     }],
+    rentOrSale: {
+        type: String,
+        required: true,
+        enum: ['alquiler', 'venta']
+    },
     status: {
         type: String,
         required: true,
-        enum: ['alquiler', 'venta', 'reservada', 'alquilada', 'vendida']
+        enum: ['alquiler - venta', 'reservada', 'alquilada - vendida']
     },
     price: {
         type: Number,

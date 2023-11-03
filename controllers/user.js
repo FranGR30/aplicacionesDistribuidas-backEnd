@@ -10,6 +10,8 @@ const PATH_AVATARS = "./uploads/avatars/"
 const nodemailer = require("nodemailer")
 const user = require("../models/user")
 const codeLength = 6
+const { Storage } = require("@google-cloud/storage");
+const bucketUrl = "https://storage.googleapis.com/my-home-storage/avatar/"
 
 const config = {
     host: 'smtp.gmail.com',
@@ -31,9 +33,36 @@ function generarCodigoAlfanumerico(length) {
     }
     return codigo;
 }
+const gcs = new Storage({
+    projectId: 'myhome-403923', // Reemplaza con el ID de tu proyecto en GCP
+    keyFilename: 'myKey.json', // Reemplaza con la ubicación de tu archivo de credenciales de GCP
+});
+const upload = async (req, res) => {
+    console.log("Made it /upload");
+    try {
+        if (req.file) {
+            console.log("File found, trying to upload...");
+            const fileName = `avatarImg-${Date.now()}-${req.file.originalname}`
+            const bucket = gcs.bucket('my-home-storage');
+            const blob = bucket.file(`avatar/${fileName}`);
+            await blob.save(req.file.buffer);
+            const publicUrl = `${bucketUrl}${fileName}`;
+            res.status(200).json({
+                message: "Imagen cargada con exito",
+                imageUrl: publicUrl
+            });
+        }
+    } catch (error) {
+        console.error("error gcs", error);
+        res.status(500).json({
+            error: error
+        });
+    }
+};
 
 // Prueba
 const pruebaUser = (req, res) => {
+
     return res.status(200).send({
         menaje: "Mensaje enviado desde el controller: controllers/user.js",
         usuario: req.user
@@ -50,17 +79,10 @@ const register = (req, res) => {
         })
     }
     if (req.file) {
-        let image = req.file.originalname
-        let imageSplit = image.split("\.")
-        let extension = imageSplit[1]
-        if (extension != "png" && extension != "jpg" && extension != "jpeg") {
-            let filePath = req.file.path
-            fs.unlinkSync(filePath)
-            return res.status(400).send({
-                status: "error",
-                message: "Image/s extension invalid",
-            })
-        }
+        return res.status(400).json({
+            status: "error",
+            message: "Error. No files allowed in the request",
+        })
     }
     if (!params.email2) {
         params.email2 = params.email
@@ -91,11 +113,7 @@ const register = (req, res) => {
         let newUser = new User(params)
         newUser.role = "realEstate"
         newUser.password = pwd
-        if (req.file) {
-            newUser.avatar = req.file.filename
-        } else {
-            newUser.avatar = DEFAULT_IMG
-        }
+        newUser.avatar = `${bucketUrl}${DEFAULT_IMG}`
         const code = generarCodigoAlfanumerico(codeLength)
         newUser.confirmationCode = code
         newUser.save(async (error, userStored) => {
@@ -225,12 +243,6 @@ const update = (req, res) => {
     if (!userToUpdate.email2) {
         userToUpdate.email2 = userToUpdate.email
     }
-    if (!req.file) {
-        return res.status(400).json({
-            status: "error",
-            message: "Required fields missing",
-        })
-    }
     User.find({
         $or: [
             { email: userToUpdate.email.toLowerCase() },
@@ -241,11 +253,9 @@ const update = (req, res) => {
         ]
     }).exec(async (error, users) => {
         if (error) {
-            let filePath = req.file.path
-            fs.unlinkSync(filePath)
             return res.status(500).json({
                 status: "error",
-                message: "Error updating user",
+                message: "Error trying to find users",
             })
         }
         let userIsSet = false;
@@ -255,19 +265,15 @@ const update = (req, res) => {
             }
         });
         if (userIsSet) {
-            let filePath = req.file.path
-            fs.unlinkSync(filePath)
             return res.status(400).send({
                 status: "error",
                 message: "User already registered",
             })
         }
-        if (users[0].email != userToUpdate.email.toLowerCase()) {
-            let filePath = req.file.path
-            fs.unlinkSync(filePath)
+        if (req.user.email != userToUpdate.email.toLowerCase()) {
             return res.status(400).json({
                 status: "error",
-                message: "Error updating user",
+                message: "Error. Email cant be modified",
             })
         }
         try {
@@ -276,18 +282,22 @@ const update = (req, res) => {
                 let imageSplit = image.split("\.")
                 let extension = imageSplit[1]
                 if (extension != "png" && extension != "jpg" && extension != "jpeg") {
-                    let filePath = req.file.path
-                    fs.unlinkSync(filePath)
                     return res.status(400).send({
                         status: "error",
                         message: "Image/s extension invalid",
                     })
                 }
-                if (users[0].avatar != DEFAULT_IMG) {
-                    let filePath = PATH_AVATARS + users[0].avatar
-                    fs.unlinkSync(filePath)
+                const bucket = gcs.bucket('my-home-storage');
+                if (users[0].avatar != `${bucketUrl}${DEFAULT_IMG}`) {
+                    const filePath = users[0].avatar;
+                    const filePathSplit = filePath.split("/")
+                    const fileName = filePathSplit[filePathSplit.length - 1]
+                    await bucket.file(`avatar/${fileName}`).delete();
                 }
-                userToUpdate.avatar = req.file.filename
+                const fileName = `avatarImg-${Date.now()}-${req.file.originalname}`
+                userToUpdate.avatar = `${bucketUrl}${fileName}`
+                const blob = bucket.file(`avatar/${fileName}`);
+                await blob.save(req.file.buffer);
             }
             if (userToUpdate.password) {
                 let pwd = await bcrypt.hash(userToUpdate.password, 10)
@@ -295,8 +305,6 @@ const update = (req, res) => {
             }
             let userUpdated = await User.findByIdAndUpdate(userIdentity.id, userToUpdate, { new: true })
             if (!userUpdated) {
-                let filePath = req.file.path
-                fs.unlinkSync(filePath)
                 return res.status(400).send({
                     status: "error",
                     message: "Error updating user",
@@ -309,11 +317,10 @@ const update = (req, res) => {
             })
         } catch (error) {
             if (error || !userUpdated) {
-                let filePath = req.file.path
-                fs.unlinkSync(filePath)
                 return res.status(500).send({
                     status: "error",
                     message: "Error updating user",
+                    error: error
                 })
             }
         }
@@ -323,69 +330,70 @@ const update = (req, res) => {
 const deleteUser = async (req, res) => {
     const idUser = req.user.id;
     try {
-    await User.findById(idUser).exec((error, userToDelete) => {
-        if (error || !userToDelete) {
-            return res.status(400).send({
-                status: "error",
-                message: "Error deleting user. User not found",
-            })
-        }
-        Estate.find({ realEstate: idUser }).exec(async (error, estates) => {
-            if (error) {
-                return res.status(500).send({
+        await User.findById(idUser).exec(async (error, userToDelete) => {
+            if (error || !userToDelete) {
+                return res.status(400).send({
                     status: "error",
-                    message: "Error deleting user",
-                    error: error,
-                    algo: "algo"
+                    message: "Error deleting user. User not found",
                 })
             }
-            //Eliminando imagenes de las propiedades del usuario
-            for (const element of estates) {
-                for (let j = 0; j < element.images.length; j++) {
-                    let filePath = "./uploads/estateImages/" + element.images[j]
-                    fs.unlinkSync(filePath)
+            Estate.find({ realEstate: idUser }).exec(async (error, estates) => {
+                if (error) {
+                    return res.status(500).send({
+                        status: "error",
+                        message: "Error deleting user",
+                        error: error,
+                        algo: "algo"
+                    })
                 }
+                //Eliminando imagenes de las propiedades del usuario
+                for (const element of estates) {
+                    for (let j = 0; j < element.images.length; j++) {
+                        let filePath = "./uploads/estateImages/" + element.images[j]
+                        fs.unlinkSync(filePath)
+                    }
+                }
+            })
+            //Eliminando propiedades del usuario
+            Estate.deleteMany({ "realEstate": idUser }).exec(error => {
+                if (error) {
+                    return res.status(400).send({
+                        status: "error",
+                        message: "Error deleting user",
+                    })
+                }
+            })
+            //Eliminando los favoritos del usuario
+            Favorite.deleteMany({ user: idUser }).exec(error => {
+                if (error) {
+                    return res.status(400).send({
+                        status: "error",
+                        message: "Error deleting user",
+                    })
+                }
+            })
+            //Eliminando el avatar del usuario en caso de que no sea default
+            if (userToDelete.avatar != `${bucketUrl}${DEFAULT_IMG}`) {
+                const bucket = gcs.bucket('my-home-storage');
+                const filePath = userToDelete.avatar;
+                const filePathSplit = filePath.split("/")
+                const fileName = filePathSplit[filePathSplit.length - 1]
+                await bucket.file(`avatar/${fileName}`).delete();
             }
-        })
-        //Eliminando propiedades del usuario
-        Estate.deleteMany({ "realEstate": idUser }).exec(error => {
-            if (error) {
-                return res.status(400).send({
-                    status: "error",
-                    message: "Error deleting user",
+            User.findByIdAndDelete(idUser).exec((error, userDeleted) => {
+                if (error || !userDeleted) {
+                    return res.status(400).send({
+                        status: "error",
+                        message: "Error deleting user",
+                    })
+                }
+                return res.status(200).json({
+                    status: "success",
+                    message: "User deleted",
+                    userId: idUser
                 })
-            }
-        })
-        //Eliminando los favoritos del usuario
-        Favorite.deleteMany({ user: idUser }).exec(error => {
-            if (error) {
-                return res.status(400).send({
-                    status: "error",
-                    message: "Error deleting user",
-                })
-            }
-        })
-        //Eliminando el avatar del usuario en caso de que no sea default
-        console.log(userToDelete.avatar);
-        if (userToDelete.avatar != DEFAULT_IMG) {
-            let filePath = "./uploads/avatars/" + userToDelete.avatar
-            console.log(filePath);
-            fs.unlinkSync(filePath)
-        }
-        User.findByIdAndDelete(idUser).exec((error, userDeleted) => {
-            if (error || !userDeleted) {
-                return res.status(400).send({
-                    status: "error",
-                    message: "Error deleting user",
-                })
-            }
-            return res.status(200).json({
-                status: "success",
-                message: "User deleted",
-                userId: idUser
             })
         })
-    })
     } catch (error) {
         return res.status(500).send({
             status: "error",
@@ -546,5 +554,6 @@ module.exports = {
     getAvatar,
     sendConfirmationCodeForgotPassword,
     verifyCode,
-    passwordChange
+    passwordChange,
+    upload
 }
