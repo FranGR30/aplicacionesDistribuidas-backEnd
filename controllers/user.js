@@ -195,6 +195,12 @@ const login = (req, res) => {
 }
 
 const getUser = (req, res) => {
+    if(req.user.status == "inactive") {
+        return res.status(500).send({
+            status: "error",
+            mensaje:"Unable to perform action. Inactive user"
+        })
+    }
     const id = req.params.id
     User.findById(id)
         .select({
@@ -217,6 +223,12 @@ const getUser = (req, res) => {
 }
 
 const getMe = (req, res) => {
+    if(req.user.status == "inactive") {
+        return res.status(500).send({
+            status: "error",
+            mensaje:"Unable to perform action. Inactive user"
+        })
+    }
     const id = req.user.id
     User.findById(id)
         .select({
@@ -246,6 +258,12 @@ const update = (req, res) => {
     delete userToUpdate.role
     if (!userToUpdate.email2) {
         userToUpdate.email2 = userToUpdate.email
+    }
+    if(req.user.status == "inactive") {
+        return res.status(500).send({
+            status: "error",
+            mensaje:"Unable to perform action. Inactive user"
+        })
     }
     User.find({
         $or: [
@@ -333,6 +351,12 @@ const update = (req, res) => {
 
 const deleteUser = async (req, res) => {
     const idUser = req.user.id;
+    if(req.user.status == "inactive") {
+        return res.status(500).send({
+            status: "error",
+            mensaje:"Unable to perform action. Inactive user"
+        })
+    }
     try {
         await User.findById(idUser).exec(async (error, userToDelete) => {
             if (error || !userToDelete) {
@@ -405,20 +429,6 @@ const deleteUser = async (req, res) => {
             error: error
         })
     }
-}
-
-const getAvatar = (req, res) => {
-    const file = req.params.file
-    const filePath = PATH_AVATARS + file
-    fs.stat(filePath, (error, exists) => {
-        if (!exists) {
-            return res.status(404).send({
-                status: "error",
-                message: "Image not found",
-            })
-        }
-        return res.sendFile(path.resolve(filePath))
-    })
 }
 
 const verifyCode = async (req, res) => {
@@ -555,7 +565,6 @@ module.exports = {
     getMe,
     update,
     deleteUser,
-    getAvatar,
     sendConfirmationCodeForgotPassword,
     verifyCode,
     passwordChange,
