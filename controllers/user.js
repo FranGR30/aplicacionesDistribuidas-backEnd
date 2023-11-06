@@ -434,7 +434,7 @@ const deleteUser = async (req, res) => {
 }
 
 const verifyCode = async (req, res) => {
-    const userEmail = req.body.email
+    const userEmail = req.body.email.toLowerCase()
     const code = req.body.code.toUpperCase()
     await User.find({
         email: userEmail
@@ -475,7 +475,7 @@ const verifyCode = async (req, res) => {
 
 const sendConfirmationCodeForgotPassword = async (req, res) => {
     await User.find({
-        email: req.body.email
+        email: req.body.email.toLowerCase()
     }).exec(async (error, users) => {
         if (error || users.length == 0) {
             return res.status(404).send({
@@ -517,7 +517,7 @@ const sendConfirmationCodeForgotPassword = async (req, res) => {
 
 const passwordChange = async (req, res) => {
     await User.find({
-        email: req.body.email
+        email: req.body.email.toLowerCase()
     }).exec(async (error, users) => {
         if (error || users.length == 0) {
             return res.status(404).send({
