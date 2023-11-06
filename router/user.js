@@ -8,7 +8,7 @@ const storageMulter = multer.memoryStorage();
 const uploadMulter = multer({
     storage: storageMulter,
     limits: {
-        fileSize: 100 * 1024 * 1024,
+        fileSize: 10 * 1024 * 1024,
     },
     filename: (req,file,cb) => {
         cb(null, "avatarImg-" + Date.now() + "-" + file.originalname )
