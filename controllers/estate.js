@@ -25,13 +25,13 @@ const newEstate = async (req, res) => {
         })
     }
     let params = req.body
-    if (!params.street || !params.addressNumber || !params.floor || !params.neighborhood || !params.state || !params.country
+    if (!params.street || !params.addressNumber || !params.neighborhood || !params.state || !params.country
         || !params.estateType || !params.coveredSquareMeters || !params.semiUncoveredSquaremeters
         || !params.uncoveredSquareMeters || !params.roomsAmount || !params.bathroomsAmount
         || !params.bedroomsAmount || !params.terrace || !params.balcony || !params.garage || !params.storage
-        || !params.frontOrBack || !params.antiquity || !params.orientation || !params.amenites
-        || !params.status || !params.price || !params.currency || !params.latitude || !req.files || !params.title
-        || !params.description || !params.rentOrSale) {
+        || !params.frontOrBack || !params.antiquity || !params.orientation|| !params.status || !params.price 
+        || !params.currency || !params.latitude || !req.files || !params.title|| !params.description || !params.rentOrSale
+        ) {
         return res.status(400).json({
             status: "error",
             message: "Required fields missing",
