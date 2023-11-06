@@ -87,7 +87,8 @@ const register = (req, res) => {
         })
     }
     if (!params.email2) {
-        params.email2 = params.email
+        params.email.toLowerCase();
+        params.email2 = params.email;
     }
     User.find({
         $or: [
@@ -157,6 +158,7 @@ const login = (req, res) => {
             message: "Required fields missing",
         })
     }
+    params.email.toLowerCase();
     User.findOne({ email: params.email.toLowerCase() })
         .exec((error, user) => {
             if (error || !user) {
