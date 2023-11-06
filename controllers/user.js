@@ -87,7 +87,6 @@ const register = (req, res) => {
         })
     }
     if (!params.email2) {
-        params.email.toLowerCase();
         params.email2 = params.email;
     }
     User.find({
@@ -114,6 +113,8 @@ const register = (req, res) => {
         let pwd = await bcrypt.hash(params.password, 10)
         params.password = pwd
         let newUser = new User(params)
+        newUser.email.toLowerCase();
+        newUser.email2.toLowerCase();
         newUser.role = "realEstate"
         newUser.password = pwd
         newUser.avatar = `${bucketUrl}${DEFAULT_IMG}`
@@ -158,7 +159,6 @@ const login = (req, res) => {
             message: "Required fields missing",
         })
     }
-    params.email.toLowerCase();
     User.findOne({ email: params.email.toLowerCase() })
         .exec((error, user) => {
             if (error || !user) {
