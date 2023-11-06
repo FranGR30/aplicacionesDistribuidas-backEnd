@@ -110,16 +110,16 @@ const register = (req, res) => {
                 message: "User already registered",
             })
         }
-        let pwd = await bcrypt.hash(params.password, 10)
-        params.password = pwd
-        let newUser = new User(params)
-        newUser.email.toLowerCase();
-        newUser.email2.toLowerCase();
-        newUser.role = "realEstate"
-        newUser.password = pwd
-        newUser.avatar = `${bucketUrl}${DEFAULT_IMG}`
-        const code = generarCodigoAlfanumerico(codeLength)
-        newUser.confirmationCode = code
+        let pwd = await bcrypt.hash(params.password, 10);
+        params.password = pwd;
+        let newUser = new User(params);
+        newUser.email = newUser.email.toLowerCase();
+        newUser.email2 = newUser.email2.toLowerCase();
+        newUser.role = "realEstate";
+        newUser.password = pwd;
+        newUser.avatar = `${bucketUrl}${DEFAULT_IMG}`;
+        const code = generarCodigoAlfanumerico(codeLength);
+        newUser.confirmationCode = code;
         newUser.save(async (error, userStored) => {
             if (error || !userStored) {
                 return res.status(500).send({
@@ -179,8 +179,7 @@ const login = (req, res) => {
                     message: "Authentication failed",
                 })
             }
-            const token = jwt.createToken(user)
-
+            const token = jwt.createToken(user);
             return res.status(200).json({
                 status: "success",
                 message: "Login successful",
@@ -251,11 +250,11 @@ const getMe = (req, res) => {
 }
 
 const update = (req, res) => {
-    const userToUpdate = req.body
-    const userIdentity = req.user
-    delete userToUpdate.iat
-    delete userToUpdate.exp
-    delete userToUpdate.role
+    const userToUpdate = req.body;
+    const userIdentity = req.user;
+    delete userToUpdate.iat;
+    delete userToUpdate.exp;
+    delete userToUpdate.role;
     if (!userToUpdate.email2) {
         userToUpdate.email2 = userToUpdate.email
     }
@@ -300,9 +299,9 @@ const update = (req, res) => {
         }
         try {
             if (req.file) {
-                let image = req.file.originalname
-                let imageSplit = image.split("\.")
-                let extension = imageSplit[1]
+                let image = req.file.originalname;
+                let imageSplit = image.split("\.");
+                let extension = imageSplit[1];
                 if (extension != "png" && extension != "jpg" && extension != "jpeg") {
                     return res.status(400).send({
                         status: "error",
@@ -312,20 +311,20 @@ const update = (req, res) => {
                 const bucket = gcs.bucket('my-home-storage');
                 if (users[0].avatar != `${bucketUrl}${DEFAULT_IMG}`) {
                     const filePath = users[0].avatar;
-                    const filePathSplit = filePath.split("/")
-                    const fileName = filePathSplit[filePathSplit.length - 1]
+                    const filePathSplit = filePath.split("/");
+                    const fileName = filePathSplit[filePathSplit.length - 1];
                     await bucket.file(`avatar/${fileName}`).delete();
                 }
-                const fileName = `avatarImg-${Date.now()}-${req.file.originalname}`
-                userToUpdate.avatar = `${bucketUrl}${fileName}`
+                const fileName = `avatarImg-${Date.now()}-${req.file.originalname}`;
+                userToUpdate.avatar = `${bucketUrl}${fileName}`;
                 const blob = bucket.file(`avatar/${fileName}`);
                 await blob.save(req.file.buffer);
             }
             if (userToUpdate.password) {
-                let pwd = await bcrypt.hash(userToUpdate.password, 10)
-                userToUpdate.password = pwd
+                let pwd = await bcrypt.hash(userToUpdate.password, 10);
+                userToUpdate.password = pwd;
             }
-            let userUpdated = await User.findByIdAndUpdate(userIdentity.id, userToUpdate, { new: true })
+            let userUpdated = await User.findByIdAndUpdate(userIdentity.id, userToUpdate, { new: true });
             if (!userUpdated) {
                 return res.status(400).send({
                     status: "error",
@@ -378,8 +377,8 @@ const deleteUser = async (req, res) => {
                 for (const estate of estates) {
                     for (const image of estate.images) {
                         const bucket = gcs.bucket('my-home-storage');
-                        const filePathSplit = image.split("/")
-                        const fileName = filePathSplit[filePathSplit.length - 1]
+                        const filePathSplit = image.split("/");
+                        const fileName = filePathSplit[filePathSplit.length - 1];
                         await bucket.file(`estateImages/${fileName}`).delete();
                     }
                 }
@@ -406,8 +405,8 @@ const deleteUser = async (req, res) => {
             if (userToDelete.avatar != `${bucketUrl}${DEFAULT_IMG}`) {
                 const bucket = gcs.bucket('my-home-storage');
                 const filePath = userToDelete.avatar;
-                const filePathSplit = filePath.split("/")
-                const fileName = filePathSplit[filePathSplit.length - 1]
+                const filePathSplit = filePath.split("/");
+                const fileName = filePathSplit[filePathSplit.length - 1];
                 await bucket.file(`avatar/${fileName}`).delete();
             }
             User.findByIdAndDelete(idUser).exec((error, userDeleted) => {
@@ -434,8 +433,8 @@ const deleteUser = async (req, res) => {
 }
 
 const verifyCode = async (req, res) => {
-    const userEmail = req.body.email
-    const code = req.body.code.toUpperCase()
+    const userEmail = req.body.email;
+    const code = req.body.code.toUpperCase();
     await User.find({
         email: userEmail
     }).exec(async (error, users) => {
@@ -453,7 +452,7 @@ const verifyCode = async (req, res) => {
             })
         }
         if (userToVerify.status == "active") {
-            userToVerify.passwordRecovery = true
+            userToVerify.passwordRecovery = true;
         }
         userToVerify.status = "active"
         await User.findByIdAndUpdate(userToVerify._id, userToVerify, { new: true }).exec((error, userUpdated) => {
@@ -493,8 +492,8 @@ const sendConfirmationCodeForgotPassword = async (req, res) => {
                 text: "Codigo de confirmacion: " + code,
             };
             await transport.sendMail(mensaje);
-            const user = users[0]
-            user.confirmationCode = code
+            const user = users[0];
+            user.confirmationCode = code;
             await User.findByIdAndUpdate(user._id, user, { new: true }).exec((error, userUpdated) => {
                 if (error || !userUpdated) {
                     return res.status(500).send({
@@ -532,9 +531,9 @@ const passwordChange = async (req, res) => {
                 message: "Error changing the password",
             })
         }
-        user.passwordRecovery = false
-        let pwd = await bcrypt.hash(req.body.password, 10)
-        user.password = pwd
+        user.passwordRecovery = false;
+        let pwd = await bcrypt.hash(req.body.password, 10);
+        user.password = pwd;
         await User.findByIdAndUpdate(user._id, user, { new: true }).exec(async (error, userUpdated) => {
             if (error || !userUpdated) {
                 return res.status(500).send({
