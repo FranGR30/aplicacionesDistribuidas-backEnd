@@ -101,7 +101,6 @@ const EstateSchema = Schema({
     },
     amenites: [{
         type: String,
-        required: true
     }],
     rentOrSale: {
         type: String,
