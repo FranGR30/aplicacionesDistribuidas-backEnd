@@ -96,29 +96,39 @@ const unFavorite = (req,res) => {
     })
 }
 
-const viewFavorites = (req,res) => {
-    if(req.user.status == "inactive") {
-        return res.status(500).send({
-            status: "error",
-            mensaje:"Unable to perform action. Inactive user"
-        })
-    }
-    Favorite.find(
-        {user: req.user.id}
-    ).exec(async (error, favorites) => {
-        if (error || favorites.length < 0) {
-            return res.status(500).send({
+const viewFavorites = async (req, res) => {
+    try {
+        if (req.user.status === "inactive") {
+            return res.status(500).json({
                 status: "error",
-                message: "Error finding favorites or favorites not found",
-            })
+                message: "Unable to perform action. Inactive user",
+            });
         }
+        // Obtener los IDs de las "Estates" favoritas del usuario
+        const favorites = await Favorite.find({ user: req.user.id }).select("estate").exec();
+        if (!favorites || favorites.length === 0) {
+            return res.status(200).json({
+                status: "success",
+                message: "No favorites found",
+                estates: [],
+            });
+        }
+        // Obtener los detalles de las "Estates" favoritas
+        const estateIds = favorites.map((favorite) => favorite.estate);
+        const estates = await Estate.find({ _id: { $in: estateIds } }).exec();
         return res.status(200).json({
             status: "success",
             message: "Favorites found",
-            favorites: favorites
-        })
-    })
-}
+            estates: estates,
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            status: "error",
+            message: "Error finding favorites",
+        });
+    }
+};
 
 module.exports = {
     addFavorite,

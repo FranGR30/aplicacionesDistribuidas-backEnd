@@ -121,14 +121,6 @@ const EstateSchema = Schema({
         required: true,
         enum: ['dolar', 'peso']
     },
-    latitude: {
-        type: String,
-        required: true,
-    },
-    longitude: {
-        type: String,
-        required: true,
-    },
     videoUrl: {
         type: String,
         required: false,
@@ -140,6 +132,10 @@ const EstateSchema = Schema({
     realEstate: {
         type: Schema.ObjectId,
         ref: "user"
+    },
+    location: {
+        type: {type: String, default: "Point"},
+        coordinates:[Number]
     }
 })
 

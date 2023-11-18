@@ -28,6 +28,7 @@ router.get("/me/favorites", check.auth, favoriteController.viewFavorites)
 router.post("/confirmation-code", userController.sendConfirmationCodeForgotPassword)
 router.post("/confirmation-code/verification", userController.verifyCode)
 router.post("/reset-password", userController.passwordChange)
+router.post("/user-login", userController.userLogin)
 
 // Exportar router
 module.exports = router

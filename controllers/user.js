@@ -3,6 +3,7 @@ const bcrypt = require("bcrypt")
 const jwt = require("../services/jwt")
 const Estate = require("../models/estate")
 const Favorite = require("../models/favorite")
+const Contact = require("../models/contact")
 const fs = require("fs")
 const path = require("path")
 const DEFAULT_IMG = "default.png"
@@ -250,7 +251,7 @@ const getMe = (req, res) => {
         })
 }
 
-const update = (req, res) => {
+const update = async (req, res) => {
     const userToUpdate = req.body
     const userIdentity = req.user
     delete userToUpdate.iat
@@ -265,7 +266,7 @@ const update = (req, res) => {
             mensaje: "Unable to perform action. Inactive user"
         })
     }
-    User.find({
+    await User.find({
         $or: [
             { email: userToUpdate.email.toLowerCase() },
             { email: userToUpdate.email2.toLowerCase() },
@@ -365,7 +366,7 @@ const deleteUser = async (req, res) => {
                     message: "Error deleting user. User not found",
                 })
             }
-            Estate.find({ realEstate: idUser }).exec(async (error, estates) => {
+            await Estate.find({ realEstate: idUser }).exec(async (error, estates) => {
                 if (error) {
                     return res.status(500).send({
                         status: "error",
@@ -385,23 +386,32 @@ const deleteUser = async (req, res) => {
                 }
             })
             //Eliminando propiedades del usuario
-            Estate.deleteMany({ "realEstate": idUser }).exec(error => {
+            await Estate.deleteMany({ "realEstate": idUser }).exec(error => {
                 if (error) {
                     return res.status(400).send({
                         status: "error",
-                        message: "Error deleting user",
+                        message: "Error deleting user. Error deleting estates",
                     })
                 }
             })
             //Eliminando los favoritos del usuario
-            Favorite.deleteMany({ user: idUser }).exec(error => {
+            await Favorite.deleteMany({ user: idUser }).exec(error => {
                 if (error) {
                     return res.status(400).send({
                         status: "error",
-                        message: "Error deleting user",
+                        message: "Error deleting user. Error deleting favorites",
                     })
                 }
             })
+            //Eliminado los contactos del usuario
+            try {
+            await Contact.deleteMany({ user: idUser })
+            } catch (error) {
+                return res.status(400).send({
+                    status: "error",
+                    message: "Error deleting user. Error deleting contacts",
+                })
+            }
             //Eliminando el avatar del usuario en caso de que no sea default
             if (userToDelete.avatar != `${bucketUrl}${DEFAULT_IMG}`) {
                 const bucket = gcs.bucket('my-home-storage');
@@ -410,7 +420,7 @@ const deleteUser = async (req, res) => {
                 const fileName = filePathSplit[filePathSplit.length - 1]
                 await bucket.file(`avatar/${fileName}`).delete();
             }
-            User.findByIdAndDelete(idUser).exec((error, userDeleted) => {
+            await User.findByIdAndDelete(idUser).exec((error, userDeleted) => {
                 if (error || !userDeleted) {
                     return res.status(400).send({
                         status: "error",
@@ -558,6 +568,64 @@ const passwordChange = async (req, res) => {
     })
 }
 
+const userLogin = async (req, res) => {
+    try {
+        if (!req.body.email || !req.body.name || !req.body.telephone) {
+            return res.status(400).json({
+                status: "error",
+                message: "Error. Missing required fields",
+            })
+        }
+        const user = await User.findOne({
+            email: req.body.email.toLowerCase()
+        });
+        if (user) {
+            if (user.type == "realEstate") {
+                return res.status(400).json({
+                    status: "error",
+                    message: "Error. User inactive or user is a real estate",
+                })
+            }
+            const token = jwt.createToken(user)
+            return res.status(200).json({
+                status: "success",
+                message: "Login successful",
+                user: {
+                    _id: user._id,
+                    email: user.email,
+                    telephone: user.telephone
+                },
+                token
+            })
+        } else {
+            const newUser = new User(req.body);
+            newUser.role = "user";
+            newUser.status = "active"
+            newUser.avatar = `${bucketUrl}${DEFAULT_IMG}`
+            const token = jwt.createToken(newUser);
+            try {
+                await newUser.save();
+                return res.status(200).json({
+                    status: "success",
+                    message: "Register successful",
+                    user: {
+                        _id: user._id,
+                        email: user.email,
+                    },
+                    token
+                })
+            } catch (error) {
+                return res.status(500).json({
+                    status: "error",
+                    message: "Error login user",
+                })
+            }
+        }
+    } catch (error) {
+
+    }
+}
+
 // Exportar acciones
 module.exports = {
     pruebaUser,
@@ -570,5 +638,6 @@ module.exports = {
     sendConfirmationCodeForgotPassword,
     verifyCode,
     passwordChange,
-    upload
+    upload,
+    userLogin
 }

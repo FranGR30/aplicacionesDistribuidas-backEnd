@@ -4,6 +4,7 @@ const path = require("path")
 const { Storage } = require("@google-cloud/storage");
 const { error } = require("console")
 const bucketUrl = "https://storage.googleapis.com/my-home-storage/estateImages/"
+const MaxDistance = 2000;
 
 const gcs = new Storage({
     projectId: 'myhome-403923', // Reemplaza con el ID de tu proyecto en GCP
@@ -29,15 +30,17 @@ const newEstate = async (req, res) => {
         || !params.estateType || !params.coveredSquareMeters || !params.semiUncoveredSquaremeters
         || !params.uncoveredSquareMeters || !params.roomsAmount || !params.bathroomsAmount
         || !params.bedroomsAmount || !params.terrace || !params.balcony || !params.garage || !params.storage
-        || !params.frontOrBack || !params.antiquity || !params.orientation|| !params.status || !params.price 
-        || !params.currency || !params.latitude || !req.files || !params.title|| !params.description || !params.rentOrSale
-        ) {
+        || !params.frontOrBack || !params.antiquity || !params.orientation || !params.price
+        || !params.currency || !params.latitude || !req.files || !params.title || !params.description || !params.rentOrSale
+    ) {
         return res.status(400).json({
             status: "error",
             message: "Required fields missing",
         })
     }
     let newEstate = new Estate(params);
+    newEstate.location.coordinates.push(req.body.latitude);
+    newEstate.location.coordinates.push(req.body.longitude);
     const filePromises = [];
     for (const file of req.files) {
         let image = file.originalname;
@@ -67,7 +70,8 @@ const newEstate = async (req, res) => {
             })
         );
     }
-    newEstate.realEstate = req.user.id
+    newEstate.realEstate = req.user.id;
+    newEstate.status = "alquiler - venta";
     await newEstate.save((error, estateStored) => {
         if (error || !estateStored) {
             return res.status(500).send({
@@ -110,6 +114,56 @@ const getEstate = (req, res) => {
         })
 }
 
+const getEstatesFiltered = async (req, res) => {
+    try {
+        const filter = {};
+        if (req.query.rentOrSale) {
+            filter.rentOrSale = req.query.rentOrSale;
+        }
+        if (req.query.estateType) {
+            filter.estateType = req.query.estateType;
+        }
+        if (req.query.neighborhood) {
+            filter.neighborhood = req.query.neighborhood;
+        }
+        if (req.query.currency) {
+            filter.currency = req.query.currency;
+        }
+        if (req.query.priceMin) {
+            filter.price = { $gte: req.query.priceMin };
+        }
+        if (req.query.priceMax) {
+            filter.price = { ...filter.price, $lte: req.query.priceMax };
+        }
+        if (req.query.roomsAmount) {
+            filter.roomsAmount = req.query.roomsAmount;
+        }
+        if (req.query.bedroomsAmount) {
+            filter.bedroomsAmount = req.query.bedroomsAmount;
+        }
+        if (req.query.bathroomsAmount) {
+            filter.bathroomsAmount = req.query.bathroomsAmount;
+        }
+        if (req.query.state) {
+            filter.state = req.query.state;
+        }
+        if (req.query.amenities) {
+            filter.amenites = { $in: req.query.amenities.split(',') };
+        }
+        const filteredEstates = await Estate.find(filter);
+
+        return res.status(200).json({
+            status: 'success',
+            message: 'Estates filtered successfully',
+            estates: filteredEstates,
+        });
+    } catch (error) {
+        return res.status(500).json({
+            status: 'error',
+            message: 'Error filtering estates',
+        });
+    }
+}
 
 const deleteEstate = (req, res) => {
     const id = req.params.idEstate
@@ -257,9 +311,84 @@ const updateEstate = (req, res) => {
             message: "Error updating estate",
         })
     }
-
-
 }
+
+const getNearEstates = async (req, res) => {
+    try {
+        if (!req.query.latitude || !req.query.longitude) {
+            return res.status(400).send({
+                status: "error",
+                message: "Error. Latitude or longitude missing in parameters",
+            })
+        }
+        const { latitude, longitude } = req.query
+
+        const estatesCercanas = await Estate.find({
+            location: {
+                $near: {
+                    $geometry: {
+                        type: "Point",
+                        coordinates: [parseFloat(latitude), parseFloat(longitude)]
+                    },
+                    $maxDistance: MaxDistance,
+                },
+            },
+            status: "alquiler - venta",
+        });
+        return res.status(200).json({
+            status: "success",
+            message: "Estates found",
+            estates: estatesCercanas
+        })
+    } catch (error) {
+        return res.status(500).send({
+            status: "error",
+            message: "Error fetching near estates",
+        })
+    }
+}
+
+const bookEstate = async (req, res) => {
+    try{
+        const estateToBook = await Estate.findById(req.params.estateId);
+        if (estateToBook.status != "alquiler - venta") {
+            return res.status(400).send({
+                status: "error",
+                message: "Unable to book estate. Already booked or sold",
+            })
+        }
+        estateToBook.status = "reservada";
+        await estateToBook.save();
+
+    } catch (error){
+        return res.status(500).send({
+            status: "error",
+            message: "Error updating estate status",
+        })
+    }
+}
+
+const sellOrRentEstate = async (req, res) => {
+    try{
+        const estateToSellOrRent = await Estate.findById(req.params.estateId);
+        if (estateToBook.status != "reservada") {
+            return res.status(400).send({
+                status: "error",
+                message: "Unable to sell or rent estate. Estate is not in booked status",
+            })
+        }
+        estateToSellOrRent.status = "alquilada - vendida";
+        await estateToBook.save();
+
+    } catch (error){
+        return res.status(500).send({
+            status: "error",
+            message: "Error updating estate status",
+        })
+    }
+}
+
+
 
 // Exportar acciones
 module.exports = {
@@ -268,5 +397,9 @@ module.exports = {
     getEstate,
     deleteEstate,
     getEstatesfromUser,
-    updateEstate
+    updateEstate,
+    getNearEstates,
+    bookEstate,
+    sellOrRentEstate,
+    getEstatesFiltered
 }
