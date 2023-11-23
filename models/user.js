@@ -11,7 +11,6 @@ const UserSchema = Schema({
     },
     telephone: {
         type: String,
-        required: true
     },
     telephone2: {
         type: String,
