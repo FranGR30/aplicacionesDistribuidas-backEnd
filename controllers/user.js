@@ -570,7 +570,7 @@ const passwordChange = async (req, res) => {
 
 const userLogin = async (req, res) => {
     try {
-        if (!req.body.email || !req.body.name || !req.body.telephone) {
+        if (!req.body.email || !req.body.name) {
             return res.status(400).json({
                 status: "error",
                 message: "Error. Missing required fields",
@@ -593,7 +593,6 @@ const userLogin = async (req, res) => {
                 user: {
                     _id: user._id,
                     email: user.email,
-                    telephone: user.telephone
                 },
                 token
             })
