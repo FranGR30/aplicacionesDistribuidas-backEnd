@@ -206,7 +206,6 @@ const getUser = (req, res) => {
     User.findById(id)
         .select({
             password: 0,
-            role: 0
         })
         .exec((error, user) => {
             if (error || !user) {
@@ -233,8 +232,7 @@ const getMe = (req, res) => {
     const id = req.user.id
     User.findById(id)
         .select({
-            password: 0,
-            role: 0
+            password: 0
         })
         .exec((error, user) => {
             if (error || !user) {
@@ -243,10 +241,11 @@ const getMe = (req, res) => {
                     message: "User not found or an error has occured",
                 })
             }
+            console.log(user);
             return res.status(200).json({
                 status: "success",
                 message: "User found",
-                user: user
+                user: user,
             })
         })
 }
@@ -570,7 +569,7 @@ const passwordChange = async (req, res) => {
 
 const userLogin = async (req, res) => {
     try {
-        if (!req.body.email || !req.body.name) {
+        if (!req.body.email || !req.body.name || !req.body.surname) {
             return res.status(400).json({
                 status: "error",
                 message: "Error. Missing required fields",
@@ -603,17 +602,18 @@ const userLogin = async (req, res) => {
             newUser.avatar = `${bucketUrl}${DEFAULT_IMG}`
             const token = jwt.createToken(newUser);
             try {
-                await newUser.save();
+                const userSaved = await newUser.save();
                 return res.status(200).json({
                     status: "success",
                     message: "Register successful",
                     user: {
-                        _id: user._id,
-                        email: user.email,
+                        _id: userSaved._id,
+                        email: userSaved.email,
                     },
                     token
                 })
             } catch (error) {
+                console.error(error);
                 return res.status(500).json({
                     status: "error",
                     message: "Error login user",
@@ -621,7 +621,10 @@ const userLogin = async (req, res) => {
             }
         }
     } catch (error) {
-
+        return res.status(500).json({
+            status: "error",
+            message: "Error login user",
+        })
     }
 }
 
