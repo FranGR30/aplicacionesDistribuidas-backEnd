@@ -241,7 +241,6 @@ const getMe = (req, res) => {
                     message: "User not found or an error has occured",
                 })
             }
-            console.log(user);
             return res.status(200).json({
                 status: "success",
                 message: "User found",
@@ -579,7 +578,7 @@ const userLogin = async (req, res) => {
             email: req.body.email.toLowerCase()
         });
         if (user) {
-            if (user.type == "realEstate") {
+            if (user.role == "realEstate") {
                 return res.status(400).json({
                     status: "error",
                     message: "Error. User inactive or user is a real estate",
@@ -613,7 +612,6 @@ const userLogin = async (req, res) => {
                     token
                 })
             } catch (error) {
-                console.error(error);
                 return res.status(500).json({
                     status: "error",
                     message: "Error login user",

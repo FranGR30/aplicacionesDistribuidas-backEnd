@@ -19,26 +19,16 @@ const createContact = async (req, res) => {
             mensaje:"Unable to perform action"
         })
     }
-    if (!Date(req.body.date)) {
-        return res.status(500).send({
-            status: "error",
-            mensaje:"Invalid date"
-        })
-    }
     const params = req.body
     let newContact = new Contact(params)
     newContact.user = req.user.id
-    if (newContact.date == undefined) {
-        return res.status(500).send({
-            status: "error",
-            mensaje:"Invalid date"
-        })
-    }
-    if (newContact.date < Date.now()) {
-        return res.status(500).send({
-            status: "error",
-            mensaje:"Unable to perform action"
-        })
+    if(req.body.type == "visit") {
+        if (newContact.date == undefined || !Date(req.body.date) || newContact.date < Date.now()) {
+            return res.status(500).send({
+                status: "error",
+                mensaje:"Invalid date"
+            })
+        }
     }
     await Contact.find({
         $and:[
@@ -54,7 +44,7 @@ const createContact = async (req, res) => {
             })
         }
         for (const element of contacts) {
-            if (element.date.getDate() == newContact.date.getDate() && element.date.getMonth() == newContact.date.getMonth()) {
+            if (element.date.getDate() == newContact.date.getDate() && element.date.getMonth() == newContact.date.getMonth() && element.visitShift == newContact.visitShift) {
                 return res.status(500).send({
                     status: "error",
                     mensaje:"Visit already booked for the selected day and shift"
