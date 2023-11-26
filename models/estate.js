@@ -141,6 +141,10 @@ const EstateSchema = Schema({
         type: Schema.ObjectId,
         ref: "user"
     },
+    created_at: {
+        type: Date,
+        default: Date.now
+    }
 })
 
 module.exports = model("estate", EstateSchema)

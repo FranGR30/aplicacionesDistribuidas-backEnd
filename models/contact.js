@@ -26,6 +26,10 @@ const contactSchema = Schema({
     visitShift: {
         type: String,
         enum: ["morning", "afternoon"],
+    },
+    created_at: {
+        type: Date,
+        default: Date.now
     }
 })
 
