@@ -136,7 +136,11 @@ const EstateSchema = Schema({
     location: {
         type: {type: String, default: "Point"},
         coordinates:[Number]
-    }
+    },
+    reservedBy: {
+        type: Schema.ObjectId,
+        ref: "user"
+    },
 })
 
 module.exports = model("estate", EstateSchema)

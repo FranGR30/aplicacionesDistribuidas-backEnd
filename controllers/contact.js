@@ -32,6 +32,7 @@ const createContact = async (req, res) => {
     }
     await Contact.find({
         $and:[
+            {"estate": newContact.estate},
             {"realEstate":newContact.realEstate},
             {"user": newContact.user},
             {"visitShift": newContact.visitShift}

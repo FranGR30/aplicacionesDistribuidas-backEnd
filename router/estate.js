@@ -18,6 +18,7 @@ const uploadMulter = multer({
 
 // Definir rutas
 router.get("/prueba-estate", estateController.pruebaEstate)
+router.get("/user/my-reservations", check.auth, estateController.getReservedEstates)
 router.post("/", [check.auth, uploadMulter.array("pictures",10)], estateController.newEstate)
 router.get("/:idEstate",check.auth, estateController.getEstate)
 router.delete("/:idEstate",check.auth, estateController.deleteEstate)
@@ -27,6 +28,7 @@ router.put("/:estateId",[check.auth, uploadMulter.array("pictures",10)],estateCo
 router.patch("/reservation/:estateId", check.auth, estateController.bookEstate)
 router.patch("/sale-rent/:estateId", check.auth, estateController.sellOrRentEstate)
 router.get("/filter", check.auth, estateController.getEstatesFiltered)
+
 
 // Exportar router
 module.exports = router

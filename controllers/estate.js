@@ -215,7 +215,6 @@ const getEstatesfromUser = (req, res) => {
             return res.status(500).send({
                 status: "error",
                 message: "Estates not found or an error has occured",
-                error: error
             })
         }
         return res.status(200).json({
@@ -360,10 +359,12 @@ const bookEstate = async (req, res) => {
             })
         }
         estateToBook.status = "reservada";
+        estateToBook.reservedBy = req.user.id;
         await Estate.findByIdAndUpdate(estateId, estateToBook, { new: true })
         res.status(200).send({
             status: "success",
             message: "Estate status updated successfully",
+            estate: estateToBook
         });
     } catch (error){
         return res.status(500).send({
@@ -389,6 +390,7 @@ const sellOrRentEstate = async (req, res) => {
         res.status(200).send({
             status: "success",
             message: "Estate status updated successfully",
+            estate: estateToSellOrRent
         });
     } catch (error){
         console.error(error);
@@ -399,7 +401,28 @@ const sellOrRentEstate = async (req, res) => {
     }
 }
 
-
+const getReservedEstates = async (req,res) => {
+    try {
+        const userId = req.user.id;
+        const reservedProperties = await Estate.find({ "reservedBy": userId })
+        if (reservedProperties.length == 0) {
+            res.status(200).send({
+                status: "success",
+                message: "No reservations found",
+            });
+        }
+        res.status(200).send({
+            status: "success",
+            message: "Estates found",
+            estates: reservedProperties
+        });
+    } catch (error) {
+        res.status(500).send({
+            status: "error",
+            message: "Error getting estates from user",
+        });
+    }
+}
 
 // Exportar acciones
 module.exports = {
@@ -412,5 +435,6 @@ module.exports = {
     getNearEstates,
     bookEstate,
     sellOrRentEstate,
-    getEstatesFiltered
+    getEstatesFiltered,
+    getReservedEstates
 }

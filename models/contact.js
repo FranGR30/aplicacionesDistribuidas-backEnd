@@ -3,11 +3,15 @@ const {Schema, model} = require("mongoose")
 const contactSchema = Schema({
     realEstate: {
         type: Schema.ObjectId,
-        ref: "Estate"
+        ref: "User"
     },
     user: {
         type: Schema.ObjectId,
         ref: "User"
+    },
+    estate:{
+        type:Schema.ObjectId,
+        ref: "Estate"
     },
     type: {
         type: String,
