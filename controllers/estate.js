@@ -350,7 +350,9 @@ const getNearEstates = async (req, res) => {
 
 const bookEstate = async (req, res) => {
     try{
-        const estateToBook = await Estate.findById(req.params.estateId);
+        const estateId = req.params.estateId;
+        const estateToBook = await Estate.findById(estateId);
+        console.log(estateToBook);
         if (estateToBook.status != "alquiler - venta") {
             return res.status(400).send({
                 status: "error",
@@ -358,8 +360,11 @@ const bookEstate = async (req, res) => {
             })
         }
         estateToBook.status = "reservada";
-        await estateToBook.save();
-
+        await Estate.findByIdAndUpdate(estateId, estateToBook, { new: true })
+        res.status(200).send({
+            status: "success",
+            message: "Estate status updated successfully",
+        });
     } catch (error){
         return res.status(500).send({
             status: "error",
@@ -370,17 +375,23 @@ const bookEstate = async (req, res) => {
 
 const sellOrRentEstate = async (req, res) => {
     try{
+        const estateId = req.params.estateId;
+        console.log(estateId);
         const estateToSellOrRent = await Estate.findById(req.params.estateId);
-        if (estateToBook.status != "reservada") {
+        if (estateToSellOrRent.status != "reservada") {
             return res.status(400).send({
                 status: "error",
                 message: "Unable to sell or rent estate. Estate is not in booked status",
             })
         }
         estateToSellOrRent.status = "alquilada - vendida";
-        await estateToBook.save();
-
+        await Estate.findByIdAndUpdate(estateId, estateToSellOrRent, { new: true })
+        res.status(200).send({
+            status: "success",
+            message: "Estate status updated successfully",
+        });
     } catch (error){
+        console.error(error);
         return res.status(500).send({
             status: "error",
             message: "Error updating estate status",
