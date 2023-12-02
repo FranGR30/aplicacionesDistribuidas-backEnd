@@ -38,9 +38,11 @@ const newEstate = async (req, res) => {
             message: "Required fields missing",
         })
     }
+    let amenites = req.body.amenites.toLowerCase().replace(/\s/g, '').split(",");
     let newEstate = new Estate(params);
     newEstate.location.coordinates.push(req.body.latitude);
     newEstate.location.coordinates.push(req.body.longitude);
+    newEstate.amenites = amenites;
     const filePromises = [];
     for (const file of req.files) {
         let image = file.originalname;
@@ -147,17 +149,17 @@ const getEstatesFiltered = async (req, res) => {
         if (req.query.state) {
             filter.state = req.query.state;
         }
-        if (req.query.amenities) {
-            filter.amenites = { $in: req.query.amenities.split(',') };
+        if (req.query.amenites) {
+            filter.amenites =  { $all: req.query.amenites.split(",")  };
         }
         const filteredEstates = await Estate.find(filter);
-
         return res.status(200).json({
             status: 'success',
             message: 'Estates filtered successfully',
             estates: filteredEstates,
         });
     } catch (error) {
+        console.error(error);
         return res.status(500).json({
             status: 'error',
             message: 'Error filtering estates',
@@ -348,7 +350,7 @@ const getNearEstates = async (req, res) => {
 }
 
 const bookEstate = async (req, res) => {
-    try{
+    try {
         const estateId = req.params.estateId;
         const estateToBook = await Estate.findById(estateId);
         console.log(estateToBook);
@@ -366,7 +368,7 @@ const bookEstate = async (req, res) => {
             message: "Estate status updated successfully",
             estate: estateToBook
         });
-    } catch (error){
+    } catch (error) {
         return res.status(500).send({
             status: "error",
             message: "Error updating estate status",
@@ -375,7 +377,7 @@ const bookEstate = async (req, res) => {
 }
 
 const sellOrRentEstate = async (req, res) => {
-    try{
+    try {
         const estateId = req.params.estateId;
         console.log(estateId);
         const estateToSellOrRent = await Estate.findById(req.params.estateId);
@@ -392,7 +394,7 @@ const sellOrRentEstate = async (req, res) => {
             message: "Estate status updated successfully",
             estate: estateToSellOrRent
         });
-    } catch (error){
+    } catch (error) {
         console.error(error);
         return res.status(500).send({
             status: "error",
@@ -401,7 +403,7 @@ const sellOrRentEstate = async (req, res) => {
     }
 }
 
-const getReservedEstates = async (req,res) => {
+const getReservedEstates = async (req, res) => {
     try {
         const userId = req.user.id;
         const reservedProperties = await Estate.find({ "reservedBy": userId })

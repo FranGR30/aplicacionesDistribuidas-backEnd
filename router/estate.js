@@ -20,6 +20,7 @@ const uploadMulter = multer({
 router.get("/prueba-estate", estateController.pruebaEstate)
 router.get("/user/my-reservations", check.auth, estateController.getReservedEstates)
 router.post("/", [check.auth, uploadMulter.array("pictures",10)], estateController.newEstate)
+router.get("/filter", check.auth, estateController.getEstatesFiltered)
 router.get("/:idEstate",check.auth, estateController.getEstate)
 router.delete("/:idEstate",check.auth, estateController.deleteEstate)
 router.get("/user/:idUser",check.auth, estateController.getEstatesfromUser)
@@ -27,7 +28,7 @@ router.get("/estatesNearBy/search",check.auth, estateController.getNearEstates)
 router.put("/:estateId",[check.auth, uploadMulter.array("pictures",10)],estateController.updateEstate)
 router.patch("/reservation/:estateId", check.auth, estateController.bookEstate)
 router.patch("/sale-rent/:estateId", check.auth, estateController.sellOrRentEstate)
-router.get("/filter", check.auth, estateController.getEstatesFiltered)
+
 
 
 // Exportar router
