@@ -133,6 +133,7 @@ const getEstate = (req, res) => {
 const getEstatesFiltered = async (req, res) => {
     try {
         const filter = {};
+        filter.status = "alquiler - venta"
         if (req.query.rentOrSale) {
             filter.rentOrSale = req.query.rentOrSale;
         }
