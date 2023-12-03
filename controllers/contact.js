@@ -1,4 +1,17 @@
 const Contact = require("../models/contact")
+const nodemailer = require("nodemailer")
+const User = require("../models/user")
+
+const config = {
+    host: 'smtp.gmail.com',
+    port: 587,
+    auth: {
+        user: 'denveruniversity30@gmail.com',
+        pass: 'dbqi cxvt bewt qcjp',
+    }
+}
+
+const transport = nodemailer.createTransport(config);
 // Prueba
 const pruebaContact = (req, res) => {
     return res.status(200).send({
@@ -53,6 +66,21 @@ const createContact = async (req, res) => {
                     })
                 }
             }
+        }
+        try {
+            const realEstateToSendEmail = await User.findById(params.realEstate)
+            const mensaje = {
+                from: 'denveruniversity30@gmail.com',
+                to: realEstateToSendEmail.email,
+                subject: "Nuevo contacto",
+                text: "Recibiste un nuevo contacto! Ingresa a la aplicacion para visualizarlos",
+            };
+            await transport.sendMail(mensaje);
+        } catch (error) {
+            return res.status(500).send({
+                status: "error",
+                mensaje: "Error sending email"
+            })
         }
         newContact.save((error, contactStored) => {
             if (error || !contactStored) {
