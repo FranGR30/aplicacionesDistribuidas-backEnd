@@ -5,11 +5,25 @@ const { Storage } = require("@google-cloud/storage");
 const { error } = require("console")
 const bucketUrl = "https://storage.googleapis.com/my-home-storage/estateImages/"
 const MaxDistance = 2000;
+const nodemailer = require("nodemailer")
+const User = require("../models/user")
+const Contact = require("../models/contact")
 
 const gcs = new Storage({
     projectId: 'myhome-403923', // Reemplaza con el ID de tu proyecto en GCP
     keyFilename: 'myKey.json', // Reemplaza con la ubicación de tu archivo de credenciales de GCP
 });
+
+const config = {
+    host: 'smtp.gmail.com',
+    port: 587,
+    auth: {
+        user: 'denveruniversity30@gmail.com',
+        pass: 'dbqi cxvt bewt qcjp',
+    }
+}
+
+const transport = nodemailer.createTransport(config);
 
 // Prueba
 const pruebaEstate = (req, res) => {
@@ -150,7 +164,7 @@ const getEstatesFiltered = async (req, res) => {
             filter.state = req.query.state;
         }
         if (req.query.amenites) {
-            filter.amenites =  { $all: req.query.amenites.split(",")  };
+            filter.amenites = { $all: req.query.amenites.split(",") };
         }
         const filteredEstates = await Estate.find(filter);
         return res.status(200).json({
@@ -180,6 +194,15 @@ const deleteEstate = (req, res) => {
             return res.status(500).send({
                 status: "error",
                 message: "Estate could not be deleted",
+            })
+        }
+        try {
+            await Contact.deleteMany({ estate: id })
+        } catch (error) {
+            console.error(error);
+            return res.status(400).send({
+                status: "error",
+                message: "Error deleting contacts from estate",
             })
         }
         for (const image of estates[0].images) {
@@ -363,12 +386,21 @@ const bookEstate = async (req, res) => {
         estateToBook.status = "reservada";
         estateToBook.reservedBy = req.user.id;
         await Estate.findByIdAndUpdate(estateId, estateToBook, { new: true })
+        const realEstateToSendEmail = await User.findById(estateToBook.realEstate);
+        const mensaje = {
+            from: 'denveruniversity30@gmail.com',
+            to: realEstateToSendEmail.email,
+            subject: "Propiedad reservada",
+            text: "La propiedad " + estateToBook.title + " ha sido reservada! Ingresa en la aplicación y verifica la propiedad",
+        };
+        await transport.sendMail(mensaje);
         res.status(200).send({
             status: "success",
             message: "Estate status updated successfully",
             estate: estateToBook
         });
     } catch (error) {
+        console.error(error);
         return res.status(500).send({
             status: "error",
             message: "Error updating estate status",
