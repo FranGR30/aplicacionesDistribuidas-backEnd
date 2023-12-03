@@ -173,7 +173,6 @@ const getEstatesFiltered = async (req, res) => {
             estates: filteredEstates,
         });
     } catch (error) {
-        console.error(error);
         return res.status(500).json({
             status: 'error',
             message: 'Error filtering estates',
@@ -199,7 +198,6 @@ const deleteEstate = (req, res) => {
         try {
             await Contact.deleteMany({ estate: id })
         } catch (error) {
-            console.error(error);
             return res.status(400).send({
                 status: "error",
                 message: "Error deleting contacts from estate",
@@ -314,7 +312,10 @@ const updateEstate = (req, res) => {
                     await bucket.file(`estateImages/${fileName}`).delete();
                 }
             } catch (error) {
-                console.error(error);
+                return res.status(500).send({
+                    status: "error",
+                    message: "Estate not found",
+                })
             }
             let estateUpdated = await Estate.findByIdAndUpdate(estateId, estateToUpdate, { new: true })
             if (!estateUpdated) {
@@ -376,7 +377,6 @@ const bookEstate = async (req, res) => {
     try {
         const estateId = req.params.estateId;
         const estateToBook = await Estate.findById(estateId);
-        console.log(estateToBook);
         if (estateToBook.status != "alquiler - venta") {
             return res.status(400).send({
                 status: "error",
@@ -400,7 +400,6 @@ const bookEstate = async (req, res) => {
             estate: estateToBook
         });
     } catch (error) {
-        console.error(error);
         return res.status(500).send({
             status: "error",
             message: "Error updating estate status",
@@ -411,7 +410,6 @@ const bookEstate = async (req, res) => {
 const sellOrRentEstate = async (req, res) => {
     try {
         const estateId = req.params.estateId;
-        console.log(estateId);
         const estateToSellOrRent = await Estate.findById(req.params.estateId);
         if (estateToSellOrRent.status != "reservada") {
             return res.status(400).send({
@@ -427,7 +425,6 @@ const sellOrRentEstate = async (req, res) => {
             estate: estateToSellOrRent
         });
     } catch (error) {
-        console.error(error);
         return res.status(500).send({
             status: "error",
             message: "Error updating estate status",
