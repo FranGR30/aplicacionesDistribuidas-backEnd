@@ -168,8 +168,6 @@ const deleteContact = async (req, res) => {
                 mensaje: "Unable to perform action"
             })
         }
-        console.log(contact.realEstate);
-        console.log(req.user.id);
         if (req.user.role == "realEstate" && req.user.id != contact.realEstate) {
             return res.status(500).send({
                 status: "error",

@@ -49,7 +49,6 @@ const createCalification = async (req, res) => {
 
 const getMyCalification = (req, res) => {
     const userId = req.user.id
-    console.log(userId);
     if(req.user.status == "inactive") {
         return res.status(500).send({
             status: "error",
@@ -57,7 +56,6 @@ const getMyCalification = (req, res) => {
         })
     }
     Calification.find({"realEstate":userId}).exec(async(error,califications) => {
-        console.log(califications);
         if (error || califications.length <= 0) {
             return res.status(404).send({
                 status: "error",
@@ -97,7 +95,6 @@ const getCalification = (req, res) => {
 
 const getCalificationById = (req, res) => {
     const calificationId = req.params.calificationId
-    console.log(calificationId);
     if(req.user.status == "inactive") {
         return res.status(500).send({
             status: "error",

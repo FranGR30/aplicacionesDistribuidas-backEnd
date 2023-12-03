@@ -75,7 +75,6 @@ const pruebaUser = (req, res) => {
 const register = (req, res) => {
     let params = req.body
     if (!params.name || !params.email || !params.password || !params.telephone) {
-        console.error(error);
         return res.status(400).json({
             status: "error",
             message: "Required fields missing",

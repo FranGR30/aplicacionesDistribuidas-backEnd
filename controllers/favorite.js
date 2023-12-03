@@ -122,7 +122,6 @@ const viewFavorites = async (req, res) => {
             estates: estates,
         });
     } catch (error) {
-        console.error(error);
         return res.status(500).json({
             status: "error",
             message: "Error finding favorites",
