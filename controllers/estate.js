@@ -151,13 +151,13 @@ const getEstatesFiltered = async (req, res) => {
         if (req.query.priceMax) {
             filter.price = { ...filter.price, $lte: req.query.priceMax };
         }
-        if (req.query.roomsAmount) {
+        if (req.query.roomsAmount && req.query.roomsAmount != -1) {
             filter.roomsAmount = req.query.roomsAmount;
         }
-        if (req.query.bedroomsAmount) {
+        if (req.query.bedroomsAmount && req.query.bedroomsAmount != -1) {
             filter.bedroomsAmount = req.query.bedroomsAmount;
         }
-        if (req.query.bathroomsAmount) {
+        if (req.query.bathroomsAmount && req.query.bathroomsAmount != -1) {
             filter.bathroomsAmount = req.query.bathroomsAmount;
         }
         if (req.query.state) {
