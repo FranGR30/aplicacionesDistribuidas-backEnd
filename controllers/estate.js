@@ -442,12 +442,13 @@ const getReservedEstates = async (req, res) => {
                 status: "success",
                 message: "No reservations found",
             });
+        } else {
+            res.status(200).send({
+                status: "success",
+                message: "Estates found",
+                estates: reservedProperties
+            });
         }
-        res.status(200).send({
-            status: "success",
-            message: "Estates found",
-            estates: reservedProperties
-        });
     } catch (error) {
         res.status(500).send({
             status: "error",
