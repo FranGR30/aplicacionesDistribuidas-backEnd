@@ -95,7 +95,6 @@ const register = (req, res) => {
             { email: params.email2.toLowerCase() },
             { email2: params.email.toLowerCase() },
             { email2: params.email2.toLowerCase() },
-            { telephone: params.telephone },
         ]
     }).exec(async (error, users) => {
         if (error) {
@@ -265,11 +264,8 @@ const update = async (req, res) => {
     }
     await User.find({
         $or: [
-            { email: userToUpdate.email.toLowerCase() },
-            { email: userToUpdate.email2.toLowerCase() },
-            { email2: userToUpdate.email.toLowerCase() },
+            { email: userToUpdate.email2.toLowerCase() }, 
             { email2: userToUpdate.email2.toLowerCase() },
-            { telephone: userToUpdate.telephone },
         ]
     }).exec(async (error, users) => {
         if (error) {
@@ -288,12 +284,6 @@ const update = async (req, res) => {
             return res.status(400).send({
                 status: "error",
                 message: "User already registered",
-            })
-        }
-        if (req.user.email != userToUpdate.email.toLowerCase()) {
-            return res.status(400).json({
-                status: "error",
-                message: "Error. Email cant be modified",
             })
         }
         try {
@@ -598,6 +588,9 @@ const userLogin = async (req, res) => {
             newUser.role = "user";
             newUser.status = "active"
             newUser.avatar = `${bucketUrl}${DEFAULT_IMG}`
+            newUser.email2 = newUser.email
+            newUser.telephone = ""
+            newUser.telephone2 = ""
             const token = jwt.createToken(newUser);
             try {
                 const userSaved = await newUser.save();
